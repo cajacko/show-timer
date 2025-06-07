@@ -4,7 +4,7 @@ import DurationPicker, {
 import Timers from "@/features/timers/Timers";
 import { Play } from "@tamagui/lucide-icons";
 import React from "react";
-import { useSharedValue, withTiming } from "react-native-reanimated";
+import { Easing, useSharedValue, withTiming } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, YStack } from "tamagui";
 
@@ -43,8 +43,16 @@ export default React.memo(function TimerScreen(): React.ReactNode {
     if (seconds === null || seconds <= 0) return;
 
     return () => {
-      duration.value = withTiming(seconds, { duration: seconds * 1000 });
-      progress.value = withTiming(1, { duration: seconds * 1000 });
+      console.log("start");
+
+      duration.value = withTiming(0, {
+        duration: seconds * 1000,
+        easing: Easing.linear,
+      });
+      progress.value = withTiming(1, {
+        duration: seconds * 1000,
+        easing: Easing.linear,
+      });
     };
   }, [seconds, duration, progress]);
 

@@ -1,6 +1,9 @@
 import Countdown from "@/features/countdown/Countdown";
 import React from "react";
-import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { View } from "tamagui";
 import { TimerProps } from "../types";
 
@@ -18,6 +21,8 @@ export default React.memo(function BorderTimer({
     width: width.value,
   }));
 
+  const textColor = useSharedValue<string>("#fff");
+
   return (
     <AnimatedView p="$4" background="red" style={animatedStyle}>
       <View
@@ -27,7 +32,7 @@ export default React.memo(function BorderTimer({
         background="$background"
         rounded="$2"
       >
-        <Countdown duration={duration} />
+        <Countdown duration={duration} color={textColor} />
       </View>
     </AnimatedView>
   );

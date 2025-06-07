@@ -1,16 +1,18 @@
 import React from "react";
 import { SharedValue } from "react-native-reanimated";
-import { SizableText } from "tamagui";
-
+import AnimatedNumbers from "./AnimatedNumbers";
 export interface CountdownProps {
   /**
    * Duration in seconds
    */
   duration: SharedValue<number>;
+  color: SharedValue<string>;
 }
 
 export default React.memo(function Countdown(
   props: CountdownProps
 ): React.ReactNode {
-  return <SizableText>10:12:00</SizableText>;
+  return (
+    <AnimatedNumbers value={props.duration} color={props.color} maxDigits={6} />
+  );
 });
