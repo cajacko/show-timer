@@ -1,12 +1,15 @@
 import DurationPicker, {
   Durations,
 } from "@/features/duration-picker/DurationPicker";
+import TimerLayout, {
+  TimerLayoutChild,
+} from "@/features/timer-layout/TimerLayout";
 import Timers from "@/features/timers/Timers";
 import { Play } from "@tamagui/lucide-icons";
 import React from "react";
 import { Easing, useSharedValue, withTiming } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, YStack } from "tamagui";
+import { Button, ScrollView, YStack } from "tamagui";
 
 function durationsToSeconds(durations: Partial<Durations>): number | null {
   const { hours, minutes, seconds } = durations;
@@ -35,6 +38,8 @@ export default React.memo(function TimerScreen(): React.ReactNode {
 
   const progress = useSharedValue<number>(0);
 
+  const bottomVisibility = useSharedValue<number>(1);
+
   React.useEffect(() => {
     duration.value = seconds === null ? exampleDuration : seconds;
   }, [seconds, duration]);
@@ -45,36 +50,65 @@ export default React.memo(function TimerScreen(): React.ReactNode {
     return () => {
       console.log("start");
 
-      duration.value = withTiming(0, {
-        duration: seconds * 1000,
-        easing: Easing.linear,
+      bottomVisibility.value = withTiming(0, {
+        duration: 500,
       });
+
+      duration.value = withTiming(
+        0,
+        {
+          duration: seconds * 1000,
+          easing: Easing.linear,
+        },
+        () => {
+          bottomVisibility.value = withTiming(1, {
+            duration: 500,
+          });
+          progress.value = 0; // Reset progress after completion
+          duration.value = seconds; // Reset duration to the original value
+        }
+      );
+
       progress.value = withTiming(1, {
         duration: seconds * 1000,
         easing: Easing.linear,
       });
     };
-  }, [seconds, duration, progress]);
+  }, [seconds, duration, progress, bottomVisibility]);
+
+  const timers = React.useMemo<TimerLayoutChild>(
+    () =>
+      function TimersChild({ height, width }) {
+        return (
+          <Timers
+            width={width}
+            height={height}
+            duration={duration}
+            progress={progress}
+          />
+        );
+      },
+    [duration, progress]
+  );
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <YStack items="center">
-        <Timers
-          width="100%"
-          height={300}
-          duration={duration}
-          progress={progress}
-        />
-        <DurationPicker
-          hours={durations.hours}
-          minutes={durations.minutes}
-          seconds={durations.seconds}
-          onChange={setDurations}
-        />
-        {start && (
-          <Button circular size="$9" mt="$6" icon={Play} onPress={start} />
-        )}
-      </YStack>
+      <TimerLayout flex={1} bottomVisibility={bottomVisibility}>
+        {timers}
+        <ScrollView flex={1}>
+          <YStack items="center">
+            <DurationPicker
+              hours={durations.hours}
+              minutes={durations.minutes}
+              seconds={durations.seconds}
+              onChange={setDurations}
+            />
+            {start && (
+              <Button circular size="$9" mt="$6" icon={Play} onPress={start} />
+            )}
+          </YStack>
+        </ScrollView>
+      </TimerLayout>
     </SafeAreaView>
   );
 });
