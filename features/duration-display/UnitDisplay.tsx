@@ -1,38 +1,29 @@
 import React from "react";
-import { StyleProp, StyleSheet, ViewStyle } from "react-native";
-import { SizableText, XStack } from "tamagui";
+import { SizableText, XStack, XStackProps } from "tamagui";
 import formatTwoDigitNumber from "./formatTwoDigitNumber";
 
-export interface UnitDisplayProps {
-  style?: StyleProp<ViewStyle>;
+export interface UnitDisplayProps extends XStackProps {
   value?: number;
   unit: "s" | "m" | "h";
 }
 
 const nullColor = "dimgray";
 
-export default React.memo(function UnitDisplay(
-  props: UnitDisplayProps
-): React.ReactNode {
-  const style = React.useMemo(
-    () => [styles.container, props.style],
-    [props.style]
-  );
-
-  const color = props.value === undefined ? nullColor : undefined;
+export default React.memo(function UnitDisplay({
+  value,
+  unit,
+  ...xStackProps
+}: UnitDisplayProps): React.ReactNode {
+  const color = value === undefined ? nullColor : undefined;
 
   return (
-    <XStack style={style}>
-      <SizableText color={color}>
-        {props.value === undefined ? "00" : formatTwoDigitNumber(props.value)}
+    <XStack items="baseline" {...xStackProps}>
+      <SizableText color={color} size="$10">
+        {value === undefined ? "00" : formatTwoDigitNumber(value)}
       </SizableText>
-      <SizableText color={color}>{props.unit}</SizableText>
+      <SizableText color={color} size="$4">
+        {unit}
+      </SizableText>
     </XStack>
   );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
 });

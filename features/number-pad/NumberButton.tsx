@@ -1,6 +1,6 @@
-import React, { ComponentProps } from "react";
-import { StyleSheet } from "react-native";
-import { Button, ButtonText } from "tamagui";
+import { Delete } from "@tamagui/lucide-icons";
+import React from "react";
+import { Button, ButtonProps, ButtonText } from "tamagui";
 
 export type NumberButtonValue =
   | { type: "number"; value: number }
@@ -8,8 +8,7 @@ export type NumberButtonValue =
   | { type: "clear" }
   | { type: "double-zero" };
 
-export interface NumberButtonProps
-  extends Pick<ComponentProps<typeof Button>, "style"> {
+export interface NumberButtonProps extends ButtonProps {
   type: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | "backspace" | "double-zero";
   onAction?: (value: NumberButtonValue) => void;
 }
@@ -19,13 +18,8 @@ export const size = 60;
 export default React.memo(function NumberButton({
   type,
   onAction,
-  style: styleProp,
+  ...buttonProps
 }: NumberButtonProps): React.ReactNode {
-  const style = React.useMemo(
-    () => StyleSheet.flatten([styles.container, styleProp]),
-    [styleProp]
-  );
-
   const onPress = React.useMemo(() => {
     if (!onAction) return undefined;
 
@@ -49,25 +43,24 @@ export default React.memo(function NumberButton({
     };
   }, [onAction, type]);
 
-  let value: string | number = type;
+  let value: string | number | null = type;
 
   if (type === "double-zero") {
     value = "00";
   } else if (type === "backspace") {
-    value = "<-";
+    value = null;
   }
 
   return (
-    <Button onPress={onPress} onLongPress={onLongPress} size="$7">
-      <ButtonText>{value}</ButtonText>
+    <Button
+      circular
+      onPress={onPress}
+      onLongPress={onLongPress}
+      size="$9"
+      icon={type === "backspace" ? Delete : undefined}
+      {...buttonProps}
+    >
+      {value !== null && <ButtonText>{value}</ButtonText>}
     </Button>
   );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    height: size,
-    width: size,
-    borderRadius: size / 2,
-  },
 });

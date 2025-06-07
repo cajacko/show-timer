@@ -1,34 +1,24 @@
 import React from "react";
-import { StyleProp, StyleSheet, ViewStyle } from "react-native";
-import { XStack } from "tamagui";
+import { XStack, XStackProps } from "tamagui";
 import UnitDisplay from "./UnitDisplay";
 
-export interface DurationDisplayProps {
-  style?: StyleProp<ViewStyle>;
+export interface DurationDisplayProps extends XStackProps {
   seconds?: number;
   minutes?: number;
   hours?: number;
 }
 
-export default React.memo(function DurationDisplay(
-  props: DurationDisplayProps
-): React.ReactNode {
-  const style = React.useMemo(
-    () => [styles.container, props.style],
-    [props.style]
-  );
-
+export default React.memo(function DurationDisplay({
+  seconds,
+  minutes,
+  hours,
+  ...xStackProps
+}: DurationDisplayProps): React.ReactNode {
   return (
-    <XStack style={style}>
-      <UnitDisplay unit="h" value={props.hours} />
-      <UnitDisplay unit="m" value={props.minutes} />
-      <UnitDisplay unit="s" value={props.seconds} />
+    <XStack {...xStackProps}>
+      <UnitDisplay unit="h" value={hours} />
+      <UnitDisplay unit="m" value={minutes} mx="$4" />
+      <UnitDisplay unit="s" value={seconds} />
     </XStack>
   );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
 });
