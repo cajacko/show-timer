@@ -2,7 +2,7 @@ import { Image } from "expo-image";
 import { StyleSheet } from "react-native";
 
 import ParallaxScrollView from "@/components/ParallaxScrollView";
-import NumberPad from "@/features/number-pad/NumberPad";
+import Timer from "@/screens/Timer";
 
 export default function HomeScreen() {
   return (
@@ -15,7 +15,7 @@ export default function HomeScreen() {
         />
       }
     >
-      <NumberPad />
+      <Timer />
     </ParallaxScrollView>
   );
 }

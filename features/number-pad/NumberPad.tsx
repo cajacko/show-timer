@@ -4,6 +4,8 @@ import NumberButton, {
 import React from "react";
 import { XStack, YStack } from "tamagui";
 
+export type { NumberButtonValue };
+
 const grid: (
   | 0
   | 1

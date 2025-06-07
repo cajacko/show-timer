@@ -2060,7 +2060,7 @@
     "@tamagui/compose-refs" "1.126.14"
     "@tamagui/web" "1.126.14"
 
-"@tamagui/font-inter@1.126.14":
+"@tamagui/font-inter@1.126.14", "@tamagui/font-inter@^1.126.14":
   version "1.126.14"
   resolved "https://registry.yarnpkg.com/@tamagui/font-inter/-/font-inter-1.126.14.tgz#b132a7e09a2933510cb30a89329b6aef7e99cde7"
   integrity sha512-OcuWzF1vOYN7AWkwGsEx/mQwGPqoPyViRfGhpqc3dPqdKI05/x9gw1n1cibuvVZ4+Bw6LBxrV9JjC8RtWaydCA==

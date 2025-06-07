@@ -1,11 +1,14 @@
-import { defaultConfig } from "@tamagui/config/v4"; // for quick config install this
+import tamaguiConfig from "@/tamagui.config";
 import React from "react";
-import { createTamagui, TamaguiProvider } from "tamagui";
-
-const config = createTamagui(defaultConfig);
+import { TamaguiProvider } from "tamagui";
 
 export default React.memo(function Tamagui(props: {
   children?: React.ReactNode;
+  colorScheme: "light" | "dark";
 }) {
-  return <TamaguiProvider config={config}>{props.children}</TamaguiProvider>;
+  return (
+    <TamaguiProvider config={tamaguiConfig} defaultTheme={props.colorScheme}>
+      {props.children}
+    </TamaguiProvider>
+  );
 });
