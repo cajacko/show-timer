@@ -7,12 +7,18 @@ export interface CountdownProps {
    */
   duration: SharedValue<number>;
   color: SharedValue<string>;
+  fontSize: SharedValue<number>;
 }
 
 export default React.memo(function Countdown(
   props: CountdownProps
 ): React.ReactNode {
   return (
-    <AnimatedNumbers value={props.duration} color={props.color} maxDigits={6} />
+    <AnimatedNumbers
+      value={props.duration}
+      color={props.color}
+      fontSize={props.fontSize}
+      maxDigits={6}
+    />
   );
 });

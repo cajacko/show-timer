@@ -1,6 +1,9 @@
 import React from "react";
-import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
-import { SharedValue } from "react-native-reanimated";
+import { StyleProp, StyleSheet, ViewStyle } from "react-native";
+import Animated, {
+  SharedValue,
+  useAnimatedStyle,
+} from "react-native-reanimated";
 import AnimatedNumber from "./AnimatedNumber";
 
 // TODO: Have it auto expand to fit the digits, but still require a expectedMaxDigits prop, then we
@@ -9,23 +12,26 @@ import AnimatedNumber from "./AnimatedNumber";
 
 export interface AnimatedNumbersProps {
   value: SharedValue<number>;
-  fontSize?: number;
-  color?: SharedValue<string>;
+  fontSize: SharedValue<number>;
+  color: SharedValue<string>;
   style?: StyleProp<ViewStyle>;
   maxDigits: number;
 }
 
 export default React.memo(function AnimatedNumbers({
   value,
-  fontSize = 30,
+  fontSize,
   color,
   style: styleProp,
   maxDigits,
 }: AnimatedNumbersProps): React.ReactNode {
+  const animatedStyle = useAnimatedStyle(() => ({
+    height: fontSize.value,
+  }));
+
   const style = React.useMemo(
-    () =>
-      StyleSheet.flatten([styles.container, { height: fontSize }, styleProp]),
-    [fontSize, styleProp]
+    () => [styles.container, animatedStyle, styleProp],
+    [styleProp, animatedStyle]
   );
 
   const digitArray = React.useMemo(
@@ -34,7 +40,7 @@ export default React.memo(function AnimatedNumbers({
   );
 
   return (
-    <View style={style}>
+    <Animated.View style={style}>
       {digitArray.map((_, i) => {
         const reversedDigitIndex = digitArray.length - 1 - i;
 
@@ -48,7 +54,7 @@ export default React.memo(function AnimatedNumbers({
           />
         );
       })}
-    </View>
+    </Animated.View>
   );
 });
 

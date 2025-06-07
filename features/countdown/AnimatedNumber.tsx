@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 import Animated, {
   SharedValue,
   useAnimatedStyle,
@@ -29,7 +29,7 @@ export default React.memo(function Digit({
    * ...
    */
   reversedDigitIndex: number;
-  fontSize: number;
+  fontSize: SharedValue<number>;
   rounded?: boolean;
 }) {
   /**
@@ -90,8 +90,8 @@ export default React.memo(function Digit({
       width = 0;
     } else {
       // TODO: May need to do width per digit
-      width = fontSize * 0.6;
-      marginTop = -fontSize * zeroToNineIndex.value;
+      width = fontSize.value * 0.6;
+      marginTop = -fontSize.value * zeroToNineIndex.value;
     }
 
     return {
@@ -105,7 +105,7 @@ export default React.memo(function Digit({
     () => [
       styles.digit,
       {
-        height: fontSize * zeroToNine.length,
+        height: fontSize.value * zeroToNine.length,
       },
       animatedStyle,
     ],
@@ -114,32 +114,20 @@ export default React.memo(function Digit({
 
   const animatedTextStyle = useAnimatedStyle(() => ({
     color: color?.value ?? "#000",
+    fontSize: fontSize.value,
+    lineHeight: fontSize.value,
   }));
 
-  const textStyle = React.useMemo(
-    () => [
-      {
-        fontSize,
-        lineHeight: fontSize,
-      },
-      animatedTextStyle,
-    ],
-    [fontSize, animatedTextStyle]
-  );
-
-  const wrapperStyle = React.useMemo(
-    () => ({
-      height: fontSize,
-    }),
-    [fontSize]
-  );
+  const wrapperStyle = useAnimatedStyle(() => ({
+    height: fontSize.value,
+  }));
 
   return (
     <Animated.View style={style}>
       {zeroToNine.map((number, i) => (
-        <View key={i} style={wrapperStyle}>
-          <Animated.Text style={textStyle}>{number}</Animated.Text>
-        </View>
+        <Animated.View key={i} style={wrapperStyle}>
+          <Animated.Text style={animatedTextStyle}>{number}</Animated.Text>
+        </Animated.View>
       ))}
     </Animated.View>
   );
