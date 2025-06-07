@@ -5,11 +5,14 @@ import BorderTimer from "./border-timer/BorderTimer";
 import { TimerProps } from "./types";
 
 export type TimersProps = Omit<TimerProps, "height" | "width"> &
-  Omit<ViewProps, "height" | "width"> & {
+  Omit<ViewProps, keyof TimerProps> & {
     height: SharedValue<number>;
     width: SharedValue<number>;
   };
 
+/**
+ * Turn this into a horizontal scrollable list to select the timer you want to use
+ */
 export default React.memo(function Timers({
   duration,
   progress,

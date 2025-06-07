@@ -5,9 +5,10 @@ import TimerLayout, {
   TimerLayoutChild,
 } from "@/features/timer-layout/TimerLayout";
 import Timers from "@/features/timers/Timers";
+import useTimerControls from "@/features/timers/useTimerControls";
 import { Play } from "@tamagui/lucide-icons";
 import React from "react";
-import { Easing, useSharedValue, withTiming } from "react-native-reanimated";
+import { useSharedValue, withTiming } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, ScrollView, YStack } from "tamagui";
 
@@ -21,9 +22,6 @@ function durationsToSeconds(durations: Partial<Durations>): number | null {
   return (hours ?? 0) * 3600 + (minutes ?? 0) * 60 + (seconds ?? 0);
 }
 
-// To show 01:15:30 in seconds
-const exampleDuration: number = 1 * 3600 + 15 * 60 + 30; // 1 hour, 15 minutes, and 30 seconds
-
 export default React.memo(function TimerScreen(): React.ReactNode {
   const [durations, setDurations] = React.useState<Partial<Durations>>({});
 
@@ -32,49 +30,28 @@ export default React.memo(function TimerScreen(): React.ReactNode {
     [durations]
   );
 
-  const duration = useSharedValue<number>(
-    seconds === null ? exampleDuration : seconds
-  );
-
-  const progress = useSharedValue<number>(0);
-
   const bottomVisibility = useSharedValue<number>(1);
 
-  React.useEffect(() => {
-    duration.value = seconds === null ? exampleDuration : seconds;
-  }, [seconds, duration]);
+  const { duration, progress, pause, reset, resume, start, addTime, stop } =
+    useTimerControls({
+      seconds,
+      onStart: React.useCallback(() => {
+        bottomVisibility.value = withTiming(0, {
+          duration: 500,
+        });
+      }, [bottomVisibility]),
+      onComplete: React.useCallback(() => {
+        bottomVisibility.value = withTiming(1, {
+          duration: 500,
+        });
+      }, [bottomVisibility]),
+    });
 
-  const start = React.useMemo(() => {
-    if (seconds === null || seconds <= 0) return;
-
-    return () => {
-      console.log("start");
-
-      bottomVisibility.value = withTiming(0, {
-        duration: 500,
-      });
-
-      duration.value = withTiming(
-        0,
-        {
-          duration: seconds * 1000,
-          easing: Easing.linear,
-        },
-        () => {
-          bottomVisibility.value = withTiming(1, {
-            duration: 500,
-          });
-          progress.value = 0; // Reset progress after completion
-          duration.value = seconds; // Reset duration to the original value
-        }
-      );
-
-      progress.value = withTiming(1, {
-        duration: seconds * 1000,
-        easing: Easing.linear,
-      });
-    };
-  }, [seconds, duration, progress, bottomVisibility]);
+  const back = React.useCallback(() => {
+    bottomVisibility.value = withTiming(1, {
+      duration: 500,
+    });
+  }, [bottomVisibility]);
 
   const timers = React.useMemo<TimerLayoutChild>(
     () =>
@@ -85,10 +62,17 @@ export default React.memo(function TimerScreen(): React.ReactNode {
             height={height}
             duration={duration}
             progress={progress}
+            start={start}
+            reset={reset}
+            resume={resume}
+            pause={pause}
+            stop={stop}
+            addTime={addTime}
+            back={back}
           />
         );
       },
-    [duration, progress]
+    [duration, progress, start, reset, resume, pause, stop, addTime, back]
   );
 
   return (

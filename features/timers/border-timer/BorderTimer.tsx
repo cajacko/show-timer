@@ -1,11 +1,12 @@
 import Countdown from "@/features/countdown/Countdown";
+import { ArrowLeft, Pause, TimerReset } from "@tamagui/lucide-icons";
 import React from "react";
 import Animated, {
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
 } from "react-native-reanimated";
-import { View } from "tamagui";
+import { Button, View } from "tamagui";
 import { TimerProps } from "../types";
 
 export type BorderTimerProps = TimerProps;
@@ -14,6 +15,9 @@ export default React.memo(function BorderTimer({
   height,
   width,
   duration,
+  reset,
+  pause,
+  back,
 }: BorderTimerProps): React.ReactNode {
   const animatedStyle = useAnimatedStyle(() => ({
     height: height.value,
@@ -38,7 +42,12 @@ export default React.memo(function BorderTimer({
         // TODO: Fix this in native
         style={{ backgroundColor: "black" }}
       >
+        {back && <Button icon={ArrowLeft} circular size="$5" onPress={back} />}
         <Countdown duration={duration} color={textColor} fontSize={fontSize} />
+        {reset && (
+          <Button icon={TimerReset} circular size="$5" onPress={reset} />
+        )}
+        {pause && <Button icon={Pause} circular size="$5" onPress={pause} />}
       </View>
     </Animated.View>
   );
