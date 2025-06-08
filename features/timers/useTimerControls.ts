@@ -31,7 +31,8 @@ export default function useTimerControls(
 
   React.useEffect(() => {
     duration.value = seconds === null ? exampleDuration : seconds;
-  }, [seconds, duration]);
+    state.value = "stopped";
+  }, [seconds, duration, state]);
 
   const start = React.useMemo(() => {
     if (seconds === null || seconds <= 0) return undefined;
