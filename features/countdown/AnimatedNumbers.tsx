@@ -1,38 +1,35 @@
 import React from "react";
-import { StyleProp, StyleSheet, ViewStyle } from "react-native";
 import Animated, {
   SharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
+import { View } from "tamagui";
 import AnimatedNumber from "./AnimatedNumber";
+
+const AnimatedView = Animated.createAnimatedComponent(View);
 
 // TODO: Have it auto expand to fit the digits, but still require a expectedMaxDigits prop, then we
 // only cause a react render in unexpected edge cases but still satisfy the user. And this would
 // only be with huge numbers so it shouldn't update often as it would be the highest decimal
 
 export interface AnimatedNumbersProps {
-  value: SharedValue<number>;
+  value: SharedValue<number | null>;
   fontSize: SharedValue<number>;
   color: SharedValue<string>;
-  style?: StyleProp<ViewStyle>;
   maxDigits: number;
+  leadingZeroes?: SharedValue<boolean>;
 }
 
 export default React.memo(function AnimatedNumbers({
   value,
   fontSize,
   color,
-  style: styleProp,
   maxDigits,
+  leadingZeroes,
 }: AnimatedNumbersProps): React.ReactNode {
   const animatedStyle = useAnimatedStyle(() => ({
     height: fontSize.value,
   }));
-
-  const style = React.useMemo(
-    () => [styles.container, animatedStyle, styleProp],
-    [styleProp, animatedStyle]
-  );
 
   const digitArray = React.useMemo(
     () => new Array(maxDigits).fill(0),
@@ -40,7 +37,7 @@ export default React.memo(function AnimatedNumbers({
   );
 
   return (
-    <Animated.View style={style}>
+    <AnimatedView style={animatedStyle} flexDirection="row" overflow="hidden">
       {digitArray.map((_, i) => {
         const reversedDigitIndex = digitArray.length - 1 - i;
 
@@ -51,16 +48,10 @@ export default React.memo(function AnimatedNumbers({
             fontSize={fontSize}
             reversedDigitIndex={reversedDigitIndex}
             color={color}
+            leadingZeroes={leadingZeroes}
           />
         );
       })}
-    </Animated.View>
+    </AnimatedView>
   );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    overflow: "hidden",
-    flexDirection: "row",
-  },
 });

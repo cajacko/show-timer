@@ -1,10 +1,13 @@
 import React from "react";
-import { StyleSheet } from "react-native";
 import Animated, {
   SharedValue,
   useAnimatedStyle,
   useDerivedValue,
 } from "react-native-reanimated";
+import { Text, View } from "tamagui";
+
+const AnimatedView = Animated.createAnimatedComponent(View);
+const AnimatedText = Animated.createAnimatedComponent(Text);
 
 // TODO: Have it auto expand to fit the digits, but still require a expectedMaxDigits prop, then we
 // only cause a react render in unexpected edge cases but still satisfy the user. And this would
@@ -18,8 +21,9 @@ export default React.memo(function Digit({
   fontSize,
   rounded = false,
   color,
+  leadingZeroes,
 }: {
-  value: SharedValue<number>;
+  value: SharedValue<number | null>;
   color?: SharedValue<string>;
   /**
    * Is this the last number, the 10's digits the 100's? Done as an index. So:
@@ -31,6 +35,7 @@ export default React.memo(function Digit({
   reversedDigitIndex: number;
   fontSize: SharedValue<number>;
   rounded?: boolean;
+  leadingZeroes?: SharedValue<boolean>;
 }) {
   /**
    * Returns the floored value of the countdown for this digit.
@@ -53,10 +58,13 @@ export default React.memo(function Digit({
 
     const digit = parseInt(digitString, 10);
 
-    if (isNaN(digit) || digit === undefined) return null;
+    if (isNaN(digit) || digit === undefined) {
+      return leadingZeroes?.value === true ? 0 : null;
+    }
 
     if (digit !== 0) return digit;
     if (reversedDigitIndex === 0) return 0;
+    if (leadingZeroes?.value === true) return 0;
 
     let isLeadingZero = true;
 
@@ -85,32 +93,27 @@ export default React.memo(function Digit({
     let marginTop = 0;
     let width: number | undefined;
 
+    const horizontalOffset =
+      zeroToNineIndex.value === 1 ? fontSize.value * 0.1 : 0;
+
     if (zeroToNineIndex.value === null) {
       opacity = 0;
       width = 0;
     } else {
-      // TODO: May need to do width per digit
-      width = fontSize.value * 0.6;
+      const numberWidth = 0.6;
+
+      width = fontSize.value * numberWidth - horizontalOffset;
       marginTop = -fontSize.value * zeroToNineIndex.value;
     }
 
     return {
+      marginLeft: horizontalOffset,
       marginTop,
       opacity,
       width,
+      height: fontSize.value * zeroToNine.length,
     };
   });
-
-  const style = React.useMemo(
-    () => [
-      styles.digit,
-      {
-        height: fontSize.value * zeroToNine.length,
-      },
-      animatedStyle,
-    ],
-    [animatedStyle, fontSize]
-  );
 
   const animatedTextStyle = useAnimatedStyle(() => ({
     color: color?.value ?? "#000",
@@ -123,18 +126,12 @@ export default React.memo(function Digit({
   }));
 
   return (
-    <Animated.View style={style}>
+    <AnimatedView style={animatedStyle} flexDirection="column">
       {zeroToNine.map((number, i) => (
-        <Animated.View key={i} style={wrapperStyle}>
-          <Animated.Text style={animatedTextStyle}>{number}</Animated.Text>
-        </Animated.View>
+        <AnimatedView key={i} style={wrapperStyle}>
+          <AnimatedText style={animatedTextStyle}>{number}</AnimatedText>
+        </AnimatedView>
       ))}
-    </Animated.View>
+    </AnimatedView>
   );
-});
-
-const styles = StyleSheet.create({
-  digit: {
-    flexDirection: "column",
-  },
 });

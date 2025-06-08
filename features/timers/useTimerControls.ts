@@ -14,8 +14,7 @@ export interface UseTimerControlsProps {
   onComplete?: () => void; // Optional callback when the timer completes
 }
 
-// To show 01:15:30 in seconds
-const exampleDuration: number = 1 * 3600 + 15 * 60 + 30; // 1 hour, 15 minutes, and 30 seconds
+const exampleDuration: number = 0;
 
 export default function useTimerControls(
   props: UseTimerControlsProps
