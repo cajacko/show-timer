@@ -14,6 +14,7 @@ export interface TimerControls {
 export interface TimerProps extends TimerControls {
   height: SharedValue<number>;
   width: SharedValue<number>;
+  fullScreenAmount: SharedValue<number>;
   back?: () => void;
   close?: () => void;
 }

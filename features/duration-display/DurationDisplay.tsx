@@ -17,7 +17,7 @@ export default React.memo(function DurationDisplay({
   return (
     <XStack {...xStackProps}>
       <UnitDisplay unit="h" value={hours} />
-      <UnitDisplay unit="m" value={minutes} mx="$4" />
+      <UnitDisplay unit="m" value={minutes} mx="$space.4" />
       <UnitDisplay unit="s" value={seconds} />
     </XStack>
   );

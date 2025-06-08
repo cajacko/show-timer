@@ -8,7 +8,13 @@ import Timers from "@/features/timers/Timers";
 import useTimerControls from "@/features/timers/useTimerControls";
 import { Play } from "@tamagui/lucide-icons";
 import React from "react";
-import { useSharedValue, withTiming } from "react-native-reanimated";
+import { View } from "react-native";
+import {
+  interpolate,
+  useDerivedValue,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button, ScrollView, YStack } from "tamagui";
 
@@ -53,26 +59,51 @@ export default React.memo(function TimerScreen(): React.ReactNode {
     });
   }, [bottomVisibility]);
 
+  const fullScreenAmount = useDerivedValue(() =>
+    interpolate(bottomVisibility.value, [0, 1], [1, 0])
+  );
+
   const timers = React.useMemo<TimerLayoutChild>(
     () =>
       function TimersChild({ height, width }) {
         return (
-          <Timers
-            width={width}
-            height={height}
-            duration={duration}
-            progress={progress}
-            start={start}
-            reset={reset}
-            resume={resume}
-            pause={pause}
-            stop={stop}
-            addTime={addTime}
-            back={back}
-          />
+          <View
+            style={{ flex: 1 }}
+            onStartShouldSetResponder={() => bottomVisibility.value === 1}
+            onResponderRelease={() => {
+              bottomVisibility.value = withTiming(0, { duration: 500 });
+            }}
+          >
+            <Timers
+              width={width}
+              height={height}
+              duration={duration}
+              progress={progress}
+              start={start}
+              reset={reset}
+              resume={resume}
+              pause={pause}
+              stop={stop}
+              addTime={addTime}
+              back={back}
+              fullScreenAmount={fullScreenAmount}
+            />
+          </View>
         );
       },
-    [duration, progress, start, reset, resume, pause, stop, addTime, back]
+    [
+      duration,
+      progress,
+      start,
+      reset,
+      resume,
+      pause,
+      stop,
+      addTime,
+      back,
+      bottomVisibility,
+      fullScreenAmount,
+    ]
   );
 
   return (

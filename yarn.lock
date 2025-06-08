@@ -1808,7 +1808,7 @@
     "@tamagui/use-presence" "1.126.14"
     "@tamagui/web" "1.126.14"
 
-"@tamagui/animations-moti@1.126.14":
+"@tamagui/animations-moti@1.126.14", "@tamagui/animations-moti@^1.126.14":
   version "1.126.14"
   resolved "https://registry.yarnpkg.com/@tamagui/animations-moti/-/animations-moti-1.126.14.tgz#e5df67540448699abcd41cee338f9133fc2f0f2f"
   integrity sha512-sn581tDOg0TU1xiXCbdDi8V4X5XE5NebtXTQ2r4FVEGRxpeOhShC5znaHI4em0wa8HwFs7SLpY8u4mXX95gbwg==

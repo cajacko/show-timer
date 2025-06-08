@@ -30,7 +30,7 @@ export interface NumberPadProps extends YStackProps {
   onAction?: (value: NumberButtonValue) => void;
 }
 
-const margin = "$2";
+const margin = "$space.2";
 
 export default React.memo(function NumberPad({
   onAction,

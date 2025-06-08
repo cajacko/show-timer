@@ -32,7 +32,7 @@ export default React.memo(function DurationPicker({
         hours={hours}
         minutes={minutes}
         seconds={seconds}
-        mb="$4"
+        mb="$space.4"
       />
       <NumberPad onAction={onAction} />
     </YStack>

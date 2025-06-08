@@ -24,6 +24,9 @@ export default React.memo(function Timers({
   close,
   height,
   width,
+  addTime,
+  fullScreenAmount,
+  stop,
   ...viewProps
 }: TimersProps): React.ReactNode {
   return (
@@ -39,6 +42,9 @@ export default React.memo(function Timers({
         pause={pause}
         back={back}
         close={close}
+        addTime={addTime}
+        fullScreenAmount={fullScreenAmount}
+        stop={stop}
       />
     </View>
   );
