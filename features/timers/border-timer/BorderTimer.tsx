@@ -64,24 +64,38 @@ export default React.memo(function BorderTimer({
             <Button icon={ArrowLeft} circular size="$5" onPress={back} />
           </AnimatedView>
         )}
-        <Countdown duration={duration} color={textColor} fontSize={fontSize} />
 
-        {(reset || pause) && (
-          <AnimatedView flexDirection="row" style={actionAnimatedStyle}>
-            {reset && (
-              <Button
-                icon={TimerReset}
-                circular
-                size="$5"
-                onPress={reset}
-                mr={!!reset ? "$space.4" : undefined}
-              />
-            )}
-            {pause && (
-              <Button icon={Pause} circular size="$5" onPress={pause} />
-            )}
-          </AnimatedView>
-        )}
+        <View position="relative">
+          <Countdown
+            duration={duration}
+            color={textColor}
+            fontSize={fontSize}
+          />
+
+          {(reset || pause) && (
+            <AnimatedView
+              flexDirection="row"
+              style={actionAnimatedStyle}
+              position="absolute"
+              t="100%"
+              width="100%"
+              justify="center"
+            >
+              {reset && (
+                <Button
+                  icon={TimerReset}
+                  circular
+                  size="$5"
+                  onPress={reset}
+                  mr={!!reset ? "$space.4" : undefined}
+                />
+              )}
+              {pause && (
+                <Button icon={Pause} circular size="$5" onPress={pause} />
+              )}
+            </AnimatedView>
+          )}
+        </View>
       </View>
     </Animated.View>
   );
