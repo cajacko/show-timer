@@ -1,10 +1,13 @@
 import Countdown from "@/features/countdown/Countdown";
-import { ArrowLeft, Pause, TimerReset } from "@tamagui/lucide-icons";
+import { ArrowLeft, Pause, Play, TimerReset } from "@tamagui/lucide-icons";
 import React from "react";
 import Animated, {
+  interpolateColor,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
+  withRepeat,
+  withTiming,
 } from "react-native-reanimated";
 import { Button, View } from "tamagui";
 import { TimerProps } from "../types";
@@ -12,6 +15,7 @@ import { TimerProps } from "../types";
 export type BorderTimerProps = TimerProps;
 
 const AnimatedView = Animated.createAnimatedComponent(View);
+const AnimatedButton = Animated.createAnimatedComponent(Button);
 
 export default React.memo(function BorderTimer({
   height,
@@ -21,11 +25,14 @@ export default React.memo(function BorderTimer({
   pause,
   back,
   fullScreenAmount,
+  state,
+  start,
+  resume,
 }: BorderTimerProps): React.ReactNode {
   const animatedStyle = useAnimatedStyle(() => ({
     height: height.value,
     width: width.value,
-    padding: Math.round(width.value * 0.01),
+    padding: Math.round(width.value * 0.03),
     backgroundColor: "red",
   }));
 
@@ -38,11 +45,56 @@ export default React.memo(function BorderTimer({
     ],
   }));
 
-  const textColor = useSharedValue<string>("#fff");
+  const pauseAnimation = useSharedValue(0);
+
+  React.useEffect(() => {
+    pauseAnimation.value = withRepeat(
+      withTiming(1, { duration: 500 }),
+      -1,
+      true
+    );
+  }, [pauseAnimation]);
+
+  const textColor = useDerivedValue(() => {
+    if (state.value !== "paused") return "white";
+
+    return interpolateColor(
+      pauseAnimation.value,
+      [0, 1],
+      ["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 1)"]
+    );
+  });
 
   const fontSize = useDerivedValue(() => {
     return Math.round(width.value * 0.2);
   });
+
+  const pauseStyle = useAnimatedStyle(() => ({
+    opacity: state.value === "running" ? 1 : 0,
+    transform: [
+      {
+        translateY: state.value === "running" ? 0 : -99999,
+      },
+    ],
+  }));
+
+  const startStyle = useAnimatedStyle(() => ({
+    opacity: state.value === "stopped" ? 1 : 0,
+    transform: [
+      {
+        translateY: state.value === "stopped" ? 0 : -99999,
+      },
+    ],
+  }));
+
+  const resumeStyle = useAnimatedStyle(() => ({
+    opacity: state.value === "paused" ? 1 : 0,
+    transform: [
+      {
+        translateY: state.value === "paused" ? 0 : -99999,
+      },
+    ],
+  }));
 
   return (
     <Animated.View style={animatedStyle}>
@@ -78,7 +130,8 @@ export default React.memo(function BorderTimer({
               style={actionAnimatedStyle}
               position="absolute"
               t="100%"
-              width="100%"
+              l={-100}
+              r={-100}
               justify="center"
             >
               {reset && (
@@ -90,8 +143,43 @@ export default React.memo(function BorderTimer({
                   mr={!!reset ? "$space.4" : undefined}
                 />
               )}
-              {pause && (
-                <Button icon={Pause} circular size="$5" onPress={pause} />
+              {(pause || start || resume) && (
+                <View position="relative">
+                  <Button circular size="$5" opacity={0} z={1} disabled />
+                  {pause && (
+                    <AnimatedButton
+                      icon={Pause}
+                      circular
+                      size="$5"
+                      onPress={pause}
+                      style={pauseStyle}
+                      position="absolute"
+                      z={2}
+                    />
+                  )}
+                  {start && (
+                    <AnimatedButton
+                      icon={Play}
+                      circular
+                      size="$5"
+                      onPress={start}
+                      position="absolute"
+                      style={startStyle}
+                      z={2}
+                    />
+                  )}
+                  {resume && (
+                    <AnimatedButton
+                      icon={Play}
+                      circular
+                      size="$5"
+                      onPress={resume}
+                      position="absolute"
+                      style={resumeStyle}
+                      z={2}
+                    />
+                  )}
+                </View>
               )}
             </AnimatedView>
           )}

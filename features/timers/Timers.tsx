@@ -27,11 +27,13 @@ export default React.memo(function Timers({
   addTime,
   fullScreenAmount,
   stop,
+  state,
   ...viewProps
 }: TimersProps): React.ReactNode {
   return (
     <View {...viewProps}>
       <BorderTimer
+        state={state}
         height={height}
         width={width}
         duration={duration}

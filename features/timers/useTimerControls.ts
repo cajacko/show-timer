@@ -6,7 +6,7 @@ import {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { TimerControls } from "./types";
+import { TimerControls, TimerState } from "./types";
 
 export interface UseTimerControlsProps {
   seconds: number | null; // The duration in seconds, or null for a default example duration
@@ -20,6 +20,8 @@ export default function useTimerControls(
   props: UseTimerControlsProps
 ): TimerControls {
   const { seconds, onComplete, onStart } = props;
+
+  const state = useSharedValue<TimerState>("stopped");
 
   const duration = useSharedValue<number>(
     seconds === null ? exampleDuration : seconds
@@ -37,6 +39,8 @@ export default function useTimerControls(
     return () => {
       onStart?.();
 
+      state.value = "running";
+
       duration.value = withTiming(
         0,
         {
@@ -46,12 +50,13 @@ export default function useTimerControls(
         (finished) => {
           if (!finished) return;
 
+          state.value = "stopped";
+          progress.value = 0; // Reset progress after completion
+          duration.value = seconds; // Reset duration to the original value
+
           if (onComplete) {
             runOnJS(onComplete)();
           }
-
-          progress.value = 0; // Reset progress after completion
-          duration.value = seconds; // Reset duration to the original value
         }
       );
 
@@ -60,26 +65,34 @@ export default function useTimerControls(
         easing: Easing.linear,
       });
     };
-  }, [seconds, duration, progress, onStart, onComplete]);
+  }, [seconds, duration, progress, onStart, onComplete, state]);
 
-  const pause = React.useCallback(() => {
-    cancelAnimation(duration);
-    cancelAnimation(progress);
-  }, [duration, progress]);
+  const pause = React.useMemo(() => {
+    if (seconds === null || seconds <= 0) return undefined;
 
-  const stop = React.useCallback(() => {
-    duration.value = seconds === null ? exampleDuration : seconds;
-    progress.value = 0; // Reset progress to 0
-  }, [seconds, duration, progress]);
+    return () => {
+      state.value = "paused";
 
-  const reset = React.useCallback(() => {
-    stop();
-    start?.();
-  }, [stop, start]);
+      cancelAnimation(duration);
+      cancelAnimation(progress);
+    };
+  }, [duration, progress, state, seconds]);
+
+  const stop = React.useMemo(() => {
+    if (seconds === null || seconds <= 0) return undefined;
+
+    return () => {
+      state.value = "stopped";
+      duration.value = seconds === null ? exampleDuration : seconds;
+      progress.value = 0; // Reset progress to 0
+    };
+  }, [seconds, duration, progress, state]);
+
+  const reset = stop;
 
   const resume = React.useCallback(() => {
     // TODO: Implement resume functionality
-    reset();
+    reset?.();
   }, [reset]);
 
   const addTime = React.useCallback((secondsToAdd: number) => {
@@ -95,5 +108,6 @@ export default function useTimerControls(
     reset,
     resume,
     addTime,
+    state,
   };
 }
