@@ -31,7 +31,8 @@ export default function useTimerControls(
 
   React.useEffect(() => {
     duration.value = seconds === null ? exampleDuration : seconds;
-  }, [seconds, duration]);
+    state.value = "stopped";
+  }, [seconds, duration, state]);
 
   const start = React.useMemo(() => {
     if (seconds === null || seconds <= 0) return undefined;
@@ -90,10 +91,42 @@ export default function useTimerControls(
 
   const reset = stop;
 
-  const resume = React.useCallback(() => {
-    // TODO: Implement resume functionality
-    reset?.();
-  }, [reset]);
+  const resume = React.useMemo(() => {
+    if (seconds === null || seconds <= 0) return undefined;
+
+    return () => {
+      // If the timer isn't paused there's nothing to resume
+      if (state.value !== "paused") return;
+
+      state.value = "running";
+
+      const remainingMs = duration.value * 1000;
+
+      duration.value = withTiming(
+        0,
+        {
+          duration: remainingMs,
+          easing: Easing.linear,
+        },
+        (finished) => {
+          if (!finished) return;
+
+          state.value = "stopped";
+          progress.value = 0;
+          duration.value = seconds;
+
+          if (onComplete) {
+            runOnJS(onComplete)();
+          }
+        }
+      );
+
+      progress.value = withTiming(1, {
+        duration: remainingMs,
+        easing: Easing.linear,
+      });
+    };
+  }, [seconds, duration, progress, state, onComplete]);
 
   const addTime = React.useCallback((secondsToAdd: number) => {
     // TODO:
