@@ -1,11 +1,13 @@
-import { SharedValue } from "react-native-reanimated";
+import { DerivedValue, SharedValue } from "react-native-reanimated";
 
-export type TimerState = "running" | "paused" | "stopped";
+export type TimerState =
+  | { type: "running"; endDate: number }
+  | { type: "stopped" }
+  | { type: "paused"; secondsLeft: number };
 
 export interface TimerControls {
-  duration: SharedValue<number>;
-  progress: SharedValue<number>;
-  state: SharedValue<TimerState>;
+  duration: DerivedValue<number | null>;
+  state: DerivedValue<TimerState>;
   pause?: () => void;
   resume?: () => void;
   reset?: () => void;

@@ -42,29 +42,15 @@ export default React.memo(function TimerScreen(): React.ReactNode {
 
   const bottomVisibility = useSharedValue<number>(1);
 
-  const {
-    duration,
-    progress,
-    pause,
-    reset,
-    resume,
-    start,
-    addTime,
-    stop,
-    state,
-  } = useTimerControls({
-    seconds,
-    onStart: React.useCallback(() => {
-      bottomVisibility.value = withTiming(0, {
-        duration: bottomVisibilityDuration,
-      });
-    }, [bottomVisibility]),
-    onComplete: React.useCallback(() => {
-      bottomVisibility.value = withTiming(1, {
-        duration: bottomVisibilityDuration,
-      });
-    }, [bottomVisibility]),
-  });
+  const { duration, pause, reset, resume, start, addTime, stop, state } =
+    useTimerControls({
+      seconds,
+      onStart: React.useCallback(() => {
+        bottomVisibility.value = withTiming(0, {
+          duration: bottomVisibilityDuration,
+        });
+      }, [bottomVisibility]),
+    });
 
   const back = React.useCallback(() => {
     bottomVisibility.value = withTiming(1, {
@@ -112,7 +98,6 @@ export default React.memo(function TimerScreen(): React.ReactNode {
               width={width}
               height={height}
               duration={duration}
-              progress={progress}
               start={start}
               reset={reset}
               resume={resume}
@@ -127,7 +112,6 @@ export default React.memo(function TimerScreen(): React.ReactNode {
       },
     [
       duration,
-      progress,
       start,
       reset,
       resume,

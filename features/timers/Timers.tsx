@@ -15,7 +15,6 @@ export type TimersProps = Omit<TimerProps, "height" | "width"> &
  */
 export default React.memo(function Timers({
   duration,
-  progress,
   start,
   reset,
   resume,
@@ -37,7 +36,6 @@ export default React.memo(function Timers({
         height={height}
         width={width}
         duration={duration}
-        progress={progress}
         start={start}
         reset={reset}
         resume={resume}

@@ -20,7 +20,7 @@ const AnimatedButton = Animated.createAnimatedComponent(Button);
 export default React.memo(function BorderTimer({
   height,
   width,
-  duration,
+  duration: durationProp,
   reset,
   pause,
   back,
@@ -29,6 +29,11 @@ export default React.memo(function BorderTimer({
   start,
   resume,
 }: BorderTimerProps): React.ReactNode {
+  const duration = useDerivedValue<number | null>(
+    () => (durationProp.value === null ? 0 : durationProp.value),
+    [durationProp]
+  );
+
   const animatedStyle = useAnimatedStyle(() => ({
     height: height.value,
     width: width.value,
@@ -56,7 +61,7 @@ export default React.memo(function BorderTimer({
   }, [pauseAnimation]);
 
   const textColor = useDerivedValue(() => {
-    if (state.value !== "paused") return "white";
+    if (state.value.type !== "paused") return "white";
 
     return interpolateColor(
       pauseAnimation.value,
@@ -70,28 +75,28 @@ export default React.memo(function BorderTimer({
   });
 
   const pauseStyle = useAnimatedStyle(() => ({
-    opacity: state.value === "running" ? 1 : 0,
+    opacity: state.value.type === "running" ? 1 : 0,
     transform: [
       {
-        translateY: state.value === "running" ? 0 : -99999,
+        translateY: state.value.type === "running" ? 0 : -99999,
       },
     ],
   }));
 
   const startStyle = useAnimatedStyle(() => ({
-    opacity: state.value === "stopped" ? 1 : 0,
+    opacity: state.value.type === "stopped" ? 1 : 0,
     transform: [
       {
-        translateY: state.value === "stopped" ? 0 : -99999,
+        translateY: state.value.type === "stopped" ? 0 : -99999,
       },
     ],
   }));
 
   const resumeStyle = useAnimatedStyle(() => ({
-    opacity: state.value === "paused" ? 1 : 0,
+    opacity: state.value.type === "paused" ? 1 : 0,
     transform: [
       {
-        translateY: state.value === "paused" ? 0 : -99999,
+        translateY: state.value.type === "paused" ? 0 : -99999,
       },
     ],
   }));

@@ -1,6 +1,6 @@
 import React from "react";
 import {
-  SharedValue,
+  DerivedValue,
   useDerivedValue,
   useSharedValue,
 } from "react-native-reanimated";
@@ -12,9 +12,9 @@ export interface CountdownProps {
   /**
    * Duration in seconds
    */
-  duration: SharedValue<number>;
-  color: SharedValue<string>;
-  fontSize: SharedValue<number>;
+  duration: DerivedValue<number | null>;
+  color: DerivedValue<string>;
+  fontSize: DerivedValue<number>;
 }
 
 export default React.memo(function Countdown({
@@ -23,6 +23,8 @@ export default React.memo(function Countdown({
   fontSize,
 }: CountdownProps): React.ReactNode {
   const days = useDerivedValue<number | null>(() => {
+    if (duration.value === null) return null;
+
     const days = Math.floor(duration.value / 86400);
 
     if (days === 0) return null;
@@ -33,6 +35,8 @@ export default React.memo(function Countdown({
   const leadingZeroesDays = useSharedValue<boolean>(false);
 
   const hours = useDerivedValue<number | null>(() => {
+    if (duration.value === null) return null;
+
     const hours = Math.floor(duration.value / 3600);
 
     if (hours === 0) return null;
@@ -45,6 +49,8 @@ export default React.memo(function Countdown({
   );
 
   const minutes = useDerivedValue<number | null>(() => {
+    if (duration.value === null) return null;
+
     const minutes = Math.floor((duration.value % 3600) / 60);
 
     if (minutes === 0) {
@@ -59,6 +65,8 @@ export default React.memo(function Countdown({
   );
 
   const seconds = useDerivedValue<number | null>(() => {
+    if (duration.value === null) return null;
+
     const seconds = Math.floor(duration.value % 60);
 
     return seconds;

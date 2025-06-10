@@ -2,8 +2,9 @@ import React from "react";
 import {
   cancelAnimation,
   Easing,
-  runOnJS,
+  useDerivedValue,
   useSharedValue,
+  withRepeat,
   withTiming,
 } from "react-native-reanimated";
 import { TimerControls, TimerState } from "./types";
@@ -11,131 +12,126 @@ import { TimerControls, TimerState } from "./types";
 export interface UseTimerControlsProps {
   seconds: number | null; // The duration in seconds, or null for a default example duration
   onStart?: () => void; // Optional callback when the timer starts
-  onComplete?: () => void; // Optional callback when the timer completes
 }
-
-const exampleDuration: number = 0;
 
 export default function useTimerControls(
   props: UseTimerControlsProps
 ): TimerControls {
-  const { seconds, onComplete, onStart } = props;
+  const { seconds, onStart } = props;
 
-  const state = useSharedValue<TimerState>("stopped");
+  const state = useSharedValue<TimerState>({ type: "stopped" });
 
-  const duration = useSharedValue<number>(
-    seconds === null ? exampleDuration : seconds
+  // Loop is only used to force the duration useDerivedValue to update and get calculate the value
+  // based off the Date.now() and the endDate. This means we don't have ensure our withTiming call
+  // is exactly right and still works when the user closes the app and reopens it. A timer only
+  // cares about it's end date, not the exact timing of the animation. This is much more accurate
+  // and reliable than using withTiming directly on the duration.
+  const loop = useSharedValue<number | null>(0);
+
+  const duration = useDerivedValue<number | null>(() => {
+    if (state.value.type === "paused") {
+      return state.value.secondsLeft;
+    }
+
+    if (state.value.type === "running") {
+      return (state.value.endDate - Date.now()) / 1000;
+    }
+
+    // loop.value is needed in here somewhere to ensure the derived value updates. But it's not
+    // actually needed for the calculation. See above comments
+    return loop.value ? seconds : seconds;
+  });
+
+  const setTimerState = React.useCallback(
+    (newState: TimerState) => {
+      if (newState.type === "stopped" || newState.type === "paused") {
+        cancelAnimation(loop);
+        loop.value = null;
+      } else if (newState.type === "running") {
+        loop.value = 0;
+
+        loop.value = withRepeat(
+          withTiming(0, {
+            duration: 1000,
+            easing: Easing.linear,
+          }),
+          -1, // Infinite loop
+          false // Do not reverse
+        );
+      }
+
+      state.value = newState;
+    },
+    [state, loop]
   );
 
-  const progress = useSharedValue<number>(0);
-
+  // When seconds changes, reset the timer
   React.useEffect(() => {
-    duration.value = seconds === null ? exampleDuration : seconds;
-    state.value = "stopped";
-  }, [seconds, duration, state]);
+    setTimerState({
+      type: "stopped",
+    });
+  }, [seconds, setTimerState]);
+
+  const startTimer = React.useCallback(
+    (newSeconds: number) => {
+      setTimerState({
+        type: "running",
+        endDate: Date.now() + newSeconds * 1000,
+      });
+
+      onStart?.();
+    },
+    [onStart, setTimerState]
+  );
 
   const start = React.useMemo(() => {
     if (seconds === null || seconds <= 0) return undefined;
 
-    return () => {
-      onStart?.();
+    return () => startTimer(seconds);
+  }, [seconds, startTimer]);
 
-      state.value = "running";
+  const pause = React.useCallback((): boolean => {
+    if (state.value.type !== "running") return false;
 
-      duration.value = withTiming(
-        0,
-        {
-          duration: seconds * 1000,
-          easing: Easing.linear,
-        },
-        (finished) => {
-          if (!finished) return;
+    const secondsLeft = (state.value.endDate - Date.now()) / 1000;
 
-          state.value = "stopped";
-          progress.value = 0; // Reset progress after completion
-          duration.value = seconds; // Reset duration to the original value
+    setTimerState({ type: "paused", secondsLeft });
 
-          if (onComplete) {
-            runOnJS(onComplete)();
-          }
-        }
-      );
+    return true;
+  }, [setTimerState, state]);
 
-      progress.value = withTiming(1, {
-        duration: seconds * 1000,
-        easing: Easing.linear,
-      });
-    };
-  }, [seconds, duration, progress, onStart, onComplete, state]);
-
-  const pause = React.useMemo(() => {
-    if (seconds === null || seconds <= 0) return undefined;
-
-    return () => {
-      state.value = "paused";
-
-      cancelAnimation(duration);
-      cancelAnimation(progress);
-    };
-  }, [duration, progress, state, seconds]);
-
-  const stop = React.useMemo(() => {
-    if (seconds === null || seconds <= 0) return undefined;
-
-    return () => {
-      state.value = "stopped";
-      duration.value = seconds === null ? exampleDuration : seconds;
-      progress.value = 0; // Reset progress to 0
-    };
-  }, [seconds, duration, progress, state]);
+  const stop = React.useCallback(() => {
+    setTimerState({ type: "stopped" });
+  }, [setTimerState]);
 
   const reset = stop;
 
-  const resume = React.useMemo(() => {
-    if (seconds === null || seconds <= 0) return undefined;
+  const resume = React.useCallback((): boolean => {
+    // We want to resume the visible duration, if it isn't set then there's nothing to resume
+    if (state.value.type !== "paused") return false;
 
-    return () => {
-      // If the timer isn't paused there's nothing to resume
-      if (state.value !== "paused") return;
+    startTimer(state.value.secondsLeft);
 
-      state.value = "running";
+    return true;
+  }, [state, startTimer]);
 
-      const remainingMs = duration.value * 1000;
+  const addTime = React.useCallback(
+    (secondsToAdd: number): boolean => {
+      if (state.value.type !== "running") return false;
 
-      duration.value = withTiming(
-        0,
-        {
-          duration: remainingMs,
-          easing: Easing.linear,
-        },
-        (finished) => {
-          if (!finished) return;
-
-          state.value = "stopped";
-          progress.value = 0;
-          duration.value = seconds;
-
-          if (onComplete) {
-            runOnJS(onComplete)();
-          }
-        }
-      );
-
-      progress.value = withTiming(1, {
-        duration: remainingMs,
-        easing: Easing.linear,
+      setTimerState({
+        type: "running",
+        endDate: state.value.endDate + secondsToAdd * 1000,
       });
-    };
-  }, [seconds, duration, progress, state, onComplete]);
 
-  const addTime = React.useCallback((secondsToAdd: number) => {
-    // TODO:
-  }, []);
+      return true;
+    },
+    [state, setTimerState]
+  );
 
   return {
     start,
     duration,
-    progress,
     pause,
     stop,
     reset,
