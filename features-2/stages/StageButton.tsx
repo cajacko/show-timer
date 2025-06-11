@@ -4,7 +4,7 @@ import DurationDisplay from "../duration-display/DurationDisplay";
 import { Durations } from "../duration-picker/types";
 
 export interface StageButtonProps extends Omit<ButtonProps, "color"> {
-  durations: Durations;
+  durations?: Durations;
   color?: string;
   flash?: boolean;
 }

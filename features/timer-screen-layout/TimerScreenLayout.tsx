@@ -1,4 +1,5 @@
 import NumberPad from "@/features-2/number-pad/NumberPad";
+import StageSelector from "@/features-2/stages/StageSelector";
 import Timer from "@/features-2/timers/border-timer/BorderTimer";
 import { TimerState } from "@/features-2/timers/types";
 import React from "react";
@@ -24,13 +25,16 @@ export default React.memo(function TimerScreenLayout({
   const state = useSharedValue<TimerState>({ type: "stopped" });
 
   const height = useDerivedValue<number>(() => {
-    return heightProp.value / 2;
+    return heightProp.value / 3;
   }, [heightProp]);
 
   return (
     <View {...props}>
       <Timer duration={duration} state={state} width={width} height={height} />
-      <NumberPad />
+      <StageSelector />
+      <View flex={1} items="center" justify="center">
+        <NumberPad />
+      </View>
     </View>
   );
 });

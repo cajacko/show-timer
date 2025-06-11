@@ -11,12 +11,12 @@ import StageButton from "./StageButton";
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 export interface StageSelectorProps extends ViewProps {
-  green: Durations;
-  yellow: Durations;
-  red: Durations;
+  green?: Durations;
+  yellow?: Durations;
+  red?: Durations;
   activePosition?: "top" | "bottom";
-  active: "green" | "yellow" | "red";
-  onChange: (stage: "green" | "yellow" | "red") => void;
+  active?: "green" | "yellow" | "red";
+  onChange?: (stage: "green" | "yellow" | "red") => void;
 }
 
 function durationToString(duration: number): string {
@@ -48,9 +48,9 @@ export default React.memo(function StageSelector({
 }: StageSelectorProps): React.ReactNode {
   const actions = React.useMemo(
     () => ({
-      green: () => onChange("green"),
-      yellow: () => onChange("yellow"),
-      red: () => onChange("red"),
+      green: () => onChange?.("green"),
+      yellow: () => onChange?.("yellow"),
+      red: () => onChange?.("red"),
     }),
     [onChange]
   );
