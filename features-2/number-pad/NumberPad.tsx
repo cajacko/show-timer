@@ -1,6 +1,6 @@
 import NumberButton, {
   NumberButtonValue,
-} from "@/features/number-pad/NumberButton";
+} from "@/features-2/number-pad/NumberButton";
 import React from "react";
 import { XStack, YStack, YStackProps } from "tamagui";
 

@@ -1,11 +1,11 @@
-import DurationPicker from "@/features/duration-picker/DurationPicker";
-import { Durations } from "@/features/duration-picker/types";
-import StageSelector from "@/features/stages/StageSelector";
+import DurationPicker from "@/features-2/duration-picker/DurationPicker";
+import { Durations } from "@/features-2/duration-picker/types";
+import StageSelector from "@/features-2/stages/StageSelector";
 import TimerLayout, {
   TimerLayoutChild,
-} from "@/features/timer-layout/TimerLayout";
-import Timers from "@/features/timers/Timers";
-import useTimerControls from "@/features/timers/useTimerControls";
+} from "@/features-2/timer-layout/TimerLayout";
+import Timers from "@/features-2/timers/Timers";
+import useTimerControls from "@/features-2/timers/useTimerControls";
 import { Play } from "@tamagui/lucide-icons";
 import React from "react";
 import {

@@ -1,4 +1,4 @@
-import Countdown from "@/features/countdown/Countdown";
+import Countdown from "@/features-2/countdown/Countdown";
 import { ArrowLeft, Pause, Play, TimerReset } from "@tamagui/lucide-icons";
 import React from "react";
 import Animated, {
