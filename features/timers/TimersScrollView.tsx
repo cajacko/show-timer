@@ -2,10 +2,14 @@ import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import React from "react";
 import { Dimensions } from "react-native";
 import Animated, {
+  Extrapolation,
+  interpolate,
   scrollTo,
+  SharedValue,
   useAnimatedRef,
   useAnimatedStyle,
   useDerivedValue,
+  useScrollViewOffset,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
@@ -13,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Button,
   Circle,
+  CircleProps,
   ScrollViewProps,
   SizableText,
   View,
@@ -24,6 +29,7 @@ import Timer from "./Timer";
 import { TimerCommonProps } from "./Timer.types";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export interface TimersScrollViewProps extends ViewProps {}
 
@@ -36,11 +42,14 @@ const timers: {
   { component: ClockTimer, name: "Clock" },
 ];
 
+const maxIndex = timers.length - 1;
+
 const intervalDebounce = 100; // 100ms debounce, tweak to taste
 const footerContentHeight = 100;
 const scrollDuration = 500;
 const indicatorSize = 15;
 const indicatorContainerHeight = indicatorSize + 10;
+const outOfViewIndicatorScale = 0.5; // Scale for indicators that 100%
 
 function ItemFooter({
   text,
@@ -48,17 +57,45 @@ function ItemFooter({
   ...props
 }: { text: string; height: number } & Omit<ViewProps, "text">) {
   return (
-    <View
-      height={height}
-      borderWidth={1}
-      borderColor="$borderColor"
-      items="center"
-      justify="center"
-      {...props}
-    >
+    <View height={height} items="center" justify="center" {...props}>
       <SizableText size="$6">{text}</SizableText>
     </View>
   );
+}
+
+function Indicator({
+  scrollX,
+  interval,
+  index,
+  ...props
+}: {
+  scrollX: SharedValue<number>;
+  interval: number;
+  index: number;
+} & CircleProps) {
+  const style = useAnimatedStyle(() => {
+    const center = index * interval;
+
+    const scale = interpolate(
+      scrollX.value,
+      [center - interval, center, center + interval],
+      [outOfViewIndicatorScale, 1, outOfViewIndicatorScale],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      backgroundColor: "white",
+      width: indicatorSize * scale,
+      opacity: scale,
+      transform: [
+        {
+          scale,
+        },
+      ],
+    };
+  });
+
+  return <AnimatedCircle size={indicatorSize} style={style} {...props} />;
 }
 
 export default React.memo(function TimersScrollView({
@@ -67,6 +104,7 @@ export default React.memo(function TimersScrollView({
   const insets = useSafeAreaInsets();
   const scrollViewRef = useAnimatedRef<Animated.ScrollView>();
   const scrollX = useSharedValue(0);
+  const scrollXOffset = useScrollViewOffset(scrollViewRef);
 
   useDerivedValue(() => {
     scrollTo(scrollViewRef, scrollX.value, 0, true);
@@ -120,23 +158,22 @@ export default React.memo(function TimersScrollView({
   }));
 
   const onPressLeft = React.useCallback(() => {
-    const offset = scrollX.value - intervalWidth;
+    const currentIndex = Math.round(scrollXOffset.value / intervalWidth);
+    const nextIndex = currentIndex === 0 ? maxIndex : currentIndex - 1;
 
-    scrollX.value = withTiming(offset < 0 ? 0 : offset, {
-      duration: scrollDuration, // Adjust the duration as needed
+    scrollX.value = withTiming(nextIndex * intervalWidth, {
+      duration: scrollDuration,
     });
-  }, [intervalWidth, scrollX]);
+  }, [intervalWidth, scrollX, scrollXOffset]);
 
   const onPressRight = React.useCallback(() => {
-    const offset = scrollX.value + intervalWidth;
+    const currentIndex = Math.round(scrollXOffset.value / intervalWidth);
+    const nextIndex = currentIndex === maxIndex ? 0 : currentIndex + 1;
 
-    scrollX.value = withTiming(
-      offset > intervalWidth * 2 ? intervalWidth * 2 : offset,
-      {
-        duration: scrollDuration, // Adjust the duration as needed
-      }
-    );
-  }, [intervalWidth, scrollX]);
+    scrollX.value = withTiming(nextIndex * intervalWidth, {
+      duration: scrollDuration,
+    });
+  }, [intervalWidth, scrollX, scrollXOffset, maxIndex]);
 
   const itemFooterBottomPadding = insets.bottom;
 
@@ -170,8 +207,6 @@ export default React.memo(function TimersScrollView({
         justify="space-between"
         height={footerHeight}
         items="center"
-        borderWidth={1}
-        borderColor="$borderColor"
         position="absolute"
         b={0}
         l={0}
@@ -194,16 +229,15 @@ export default React.memo(function TimersScrollView({
           height={indicatorContainerHeight}
           self="flex-end"
         >
-          {timers.map((_, index) => {
-            return (
-              <Circle
-                key={index}
-                size={indicatorSize}
-                style={{ backgroundColor: "white" }}
-                mx="$space.2"
-              />
-            );
-          })}
+          {timers.map((_, index) => (
+            <Indicator
+              key={index}
+              mx="$space.1"
+              scrollX={scrollXOffset}
+              interval={intervalWidth}
+              index={index}
+            />
+          ))}
         </View>
         <Button
           icon={ChevronRight}
