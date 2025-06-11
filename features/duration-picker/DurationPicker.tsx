@@ -5,10 +5,9 @@ import NumberPad, { NumberPadProps } from "../number-pad/NumberPad";
 import changeDuration from "./changeDuration";
 import { Durations } from "./types";
 
-export type { Durations };
-
 export interface DurationPickerProps extends Partial<Durations>, YStackProps {
   onChange?: (props: Partial<Durations>) => void;
+  showDisplay?: boolean;
 }
 
 export default React.memo(function DurationPicker({
@@ -16,6 +15,7 @@ export default React.memo(function DurationPicker({
   hours,
   minutes,
   seconds,
+  showDisplay = true,
   ...yStackProps
 }: DurationPickerProps): React.ReactNode {
   const onAction = React.useMemo<NumberPadProps["onAction"]>(() => {
@@ -28,12 +28,14 @@ export default React.memo(function DurationPicker({
 
   return (
     <YStack items="center" {...yStackProps}>
-      <DurationDisplay
-        hours={hours}
-        minutes={minutes}
-        seconds={seconds}
-        mb="$space.4"
-      />
+      {showDisplay && (
+        <DurationDisplay
+          hours={hours}
+          minutes={minutes}
+          seconds={seconds}
+          mb="$space.4"
+        />
+      )}
       <NumberPad onAction={onAction} />
     </YStack>
   );

@@ -1,6 +1,6 @@
-import DurationPicker, {
-  Durations,
-} from "@/features/duration-picker/DurationPicker";
+import DurationPicker from "@/features/duration-picker/DurationPicker";
+import { Durations } from "@/features/duration-picker/types";
+import StageSelector from "@/features/stages/StageSelector";
 import TimerLayout, {
   TimerLayoutChild,
 } from "@/features/timer-layout/TimerLayout";
@@ -33,11 +33,35 @@ function durationsToSeconds(durations: Partial<Durations>): number | null {
 const bottomVisibilityDuration = 200;
 
 export default React.memo(function TimerScreen(): React.ReactNode {
-  const [durations, setDurations] = React.useState<Partial<Durations>>({});
+  const [greenDurations, setGreenDurations] = React.useState<
+    Partial<Durations>
+  >({
+    minutes: 5,
+    seconds: 0,
+  });
+
+  const [yellowDurations, setYellowDurations] = React.useState<
+    Partial<Durations>
+  >({});
+
+  const [redDurations, setRedDurations] = React.useState<Partial<Durations>>(
+    {}
+  );
+
+  const [stage, setStage] = React.useState<"green" | "yellow" | "red">("green");
+
+  const { durations, setDurations } = React.useMemo(() => {
+    if (stage === "green") {
+      return { durations: greenDurations, setDurations: setGreenDurations };
+    } else if (stage === "yellow") {
+      return { durations: yellowDurations, setDurations: setYellowDurations };
+    }
+    return { durations: redDurations, setDurations: setRedDurations };
+  }, [stage, greenDurations, yellowDurations, redDurations]);
 
   const seconds = React.useMemo(
-    () => durationsToSeconds(durations),
-    [durations]
+    () => durationsToSeconds(greenDurations),
+    [greenDurations]
   );
 
   const bottomVisibility = useSharedValue<number>(1);
@@ -87,6 +111,7 @@ export default React.memo(function TimerScreen(): React.ReactNode {
                   icon={Play}
                   onPress={start}
                   z={2}
+                  scale={1}
                   opacity={0.75}
                 />
               </View>
@@ -129,9 +154,19 @@ export default React.memo(function TimerScreen(): React.ReactNode {
     <SafeAreaView flex={1}>
       <TimerLayout flex={1} bottomVisibility={bottomVisibility}>
         {timers}
-        <ScrollView flex={1}>
+        <ScrollView flex={1} mt="$space.4">
           <YStack items="center">
+            <StageSelector
+              active={stage}
+              onChange={setStage}
+              green={greenDurations}
+              yellow={yellowDurations}
+              red={redDurations}
+              mb="$space.4"
+              activePosition="bottom"
+            />
             <DurationPicker
+              showDisplay={false}
               hours={durations.hours}
               minutes={durations.minutes}
               seconds={durations.seconds}

@@ -55,10 +55,7 @@ export default function changeDuration(
 
   return {
     hours: newHours === 0 ? undefined : newHours,
-    minutes: newHours === 0 && newMinutes === 0 ? undefined : newMinutes,
-    seconds:
-      newHours === 0 && newMinutes === 0 && newSeconds === 0
-        ? undefined
-        : newSeconds,
+    minutes: newMinutes === 0 ? undefined : newMinutes,
+    seconds: newSeconds === 0 ? undefined : newSeconds,
   };
 }
