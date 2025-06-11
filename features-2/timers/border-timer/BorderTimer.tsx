@@ -42,10 +42,10 @@ export default React.memo(function BorderTimer({
   }));
 
   const actionAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: fullScreenAmount.value,
+    opacity: fullScreenAmount?.value ?? 1,
     transform: [
       {
-        translateY: fullScreenAmount.value === 0 ? -99999 : 0,
+        translateY: fullScreenAmount?.value === 0 ? -99999 : 0,
       },
     ],
   }));
