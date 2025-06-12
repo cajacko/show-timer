@@ -14,44 +14,24 @@ export interface TimerScreenLayoutProps
   extends Omit<ViewProps, "height" | "width"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
-  layout: "portrait" | "landscape";
-  landscapeFooterHeight: number;
-  landscapeFooterWidth: number;
 }
 
 export default React.memo(function TimerScreenLayout({
   height: heightProp,
-  width: widthProp,
-  layout,
-  landscapeFooterHeight,
-  landscapeFooterWidth,
+  width,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const duration = useSharedValue<number | null>(60);
   const state = useSharedValue<TimerState>({ type: "stopped" });
 
-  const width = useDerivedValue(() => {
-    if (layout === "portrait") {
-      return widthProp.value;
-    }
-
-    return (widthProp.value - landscapeFooterWidth) / 2;
-  });
-
   const height = useDerivedValue<number>(() => {
-    if (layout === "portrait") {
-      return heightProp.value / 3;
-    }
-
-    return heightProp.value;
+    return heightProp.value / 3;
   });
 
   return (
-    <View flexDirection={layout === "landscape" ? "row" : "column"} {...props}>
+    <View flexDirection="column" {...props}>
       <Timer duration={duration} state={state} width={width} height={height} />
-      <View width={layout === "landscape" ? landscapeFooterWidth : "100%"}>
-        <StageSelector />
-      </View>
+      <StageSelector />
       <View flex={1} items="center" justify="center">
         <NumberPad />
       </View>

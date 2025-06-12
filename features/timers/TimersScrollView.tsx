@@ -26,7 +26,6 @@ const intervalDebounce = 100; // 100ms debounce, tweak to taste
 const footerContentHeight = 100;
 const indicatorSize = 15;
 const indicatorContainerHeight = indicatorSize + 10;
-const landscapeFooterWidth = 300;
 
 function ItemFooter({
   text,
@@ -48,19 +47,8 @@ function useLayout({
   const insets = useSafeAreaInsets();
   const height = useSharedValue<number>(Dimensions.get("window").height);
   const width = useSharedValue<number>(Dimensions.get("window").width);
-  const [layout, setLayout] = React.useState<"portrait" | "landscape">(() =>
-    width.value > height.value ? "landscape" : "portrait"
-  );
 
   const footerHeight = footerContentHeight + insets.bottom;
-
-  const itemHeight = useDerivedValue(() => {
-    if (layout === "portrait") {
-      return height.value - footerHeight;
-    }
-
-    return height.value;
-  });
 
   const resizeTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
@@ -73,23 +61,19 @@ function useLayout({
       height.value = newHeight;
       width.value = newWidth;
 
-      if (resizeTimeout.current) {
-        clearTimeout(resizeTimeout.current);
+      /**
+       * Updates with the latest values which are always the reanimated values
+       */
+      function update() {
+        setIntervalWidth(width.value);
 
-        resizeTimeout.current = setTimeout(() => {
-          setIntervalWidth(newWidth);
-          setLayout(newWidth > newHeight ? "landscape" : "portrait");
+        resizeTimeout.current = null;
+      }
 
-          resizeTimeout.current = null;
-        }, intervalDebounce); // 100ms debounce, tweak to taste
-      } else {
-        setLayout(newWidth > newHeight ? "landscape" : "portrait");
-        setIntervalWidth(newWidth);
+      if (!resizeTimeout.current) {
+        update();
 
-        // Block updates for the timeout
-        resizeTimeout.current = setTimeout(() => {
-          resizeTimeout.current = null;
-        }, intervalDebounce); // 100ms debounce, tweak to taste
+        resizeTimeout.current = setTimeout(update, intervalDebounce);
       }
     },
     [height, width, setIntervalWidth]
@@ -100,11 +84,10 @@ function useLayout({
   return {
     insets,
     footerHeight,
-    itemHeight,
+    height,
     width,
     itemFooterBottomPadding,
     onLayout,
-    layout,
   };
 }
 
@@ -129,14 +112,7 @@ export default React.memo(function TimersScrollView({
       <ScrollView onLayout={layout.onLayout} style={styles.scrollView}>
         {timers.map(({ component: Component, name }, index) => (
           <Page key={index}>
-            <Component
-              height={layout.itemHeight}
-              width={layout.width}
-              flex={1}
-              layout={layout.layout}
-              landscapeFooterHeight={layout.footerHeight}
-              landscapeFooterWidth={landscapeFooterWidth}
-            />
+            <Component height={layout.height} width={layout.width} flex={1} />
             <ItemFooter
               text={name}
               pb={layout.itemFooterBottomPadding}
@@ -147,7 +123,7 @@ export default React.memo(function TimersScrollView({
       </ScrollView>
       <View
         flexDirection="row"
-        width={layout.layout === "portrait" ? "100%" : landscapeFooterWidth}
+        width="100%"
         justify="space-between"
         height={layout.footerHeight}
         items="center"
