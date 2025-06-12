@@ -1,37 +1,17 @@
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import React from "react";
-import { Dimensions } from "react-native";
-import Animated, {
-  Extrapolation,
-  interpolate,
-  scrollTo,
-  SharedValue,
-  useAnimatedRef,
-  useAnimatedStyle,
-  useDerivedValue,
-  useScrollViewOffset,
-  useSharedValue,
-  withTiming,
-} from "react-native-reanimated";
+import { Dimensions, StyleSheet } from "react-native";
+import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  Button,
-  Circle,
-  CircleProps,
-  ScrollViewProps,
-  SizableText,
-  View,
-  ViewProps,
-} from "tamagui";
+import { Button, ScrollViewProps, SizableText, View, ViewProps } from "tamagui";
 import ClockTimer from "./ClockTimer";
 import DurationTimer from "./DurationTimer";
 import Timer from "./Timer";
 import { TimerCommonProps } from "./Timer.types";
+import Indicators from "@/features/pagination/Indicators";
+import usePagination from "@/features/pagination/usePagination";
 
-const AnimatedView = Animated.createAnimatedComponent(View);
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-
-export interface TimersScrollViewProps extends ViewProps {}
+export type TimersScrollViewProps = object;
 
 const timers: {
   component: React.NamedExoticComponent<TimerCommonProps>;
@@ -42,14 +22,11 @@ const timers: {
   { component: ClockTimer, name: "Clock" },
 ];
 
-const maxIndex = timers.length - 1;
-
 const intervalDebounce = 100; // 100ms debounce, tweak to taste
 const footerContentHeight = 100;
-const scrollDuration = 500;
 const indicatorSize = 15;
 const indicatorContainerHeight = indicatorSize + 10;
-const outOfViewIndicatorScale = 0.5; // Scale for indicators that 100%
+const landscapeFooterWidth = 300;
 
 function ItemFooter({
   text,
@@ -63,92 +40,27 @@ function ItemFooter({
   );
 }
 
-function Indicator({
-  scrollX,
-  interval,
-  index,
-  ...props
-}: {
-  scrollX: SharedValue<number>;
-  interval: number;
-  index: number;
-} & CircleProps) {
-  const style = useAnimatedStyle(() => {
-    const center = index * interval;
-
-    const scale = interpolate(
-      scrollX.value,
-      [center - interval, center, center + interval],
-      [outOfViewIndicatorScale, 1, outOfViewIndicatorScale],
-      Extrapolation.CLAMP
-    );
-
-    return {
-      backgroundColor: "white",
-      width: indicatorSize * scale,
-      opacity: scale,
-      transform: [
-        {
-          scale,
-        },
-      ],
-    };
-  });
-
-  return <AnimatedCircle size={indicatorSize} style={style} {...props} />;
-}
-
-function useScrolling() {
-  const scrollViewRef = useAnimatedRef<Animated.ScrollView>();
-  const scrollX = useSharedValue(0);
-  const scrollXOffset = useScrollViewOffset(scrollViewRef);
-
-  useDerivedValue(() => {
-    scrollTo(scrollViewRef, scrollX.value, 0, true);
-  });
-
-  const [intervalWidth, setIntervalWidth] = React.useState<number>(
-    Dimensions.get("window").width
-  );
-  const onPressLeft = React.useCallback(() => {
-    const currentIndex = Math.round(scrollXOffset.value / intervalWidth);
-    const nextIndex = currentIndex === 0 ? maxIndex : currentIndex - 1;
-
-    scrollX.value = withTiming(nextIndex * intervalWidth, {
-      duration: scrollDuration,
-    });
-  }, [intervalWidth, scrollX, scrollXOffset]);
-
-  const onPressRight = React.useCallback(() => {
-    const currentIndex = Math.round(scrollXOffset.value / intervalWidth);
-    const nextIndex = currentIndex === maxIndex ? 0 : currentIndex + 1;
-
-    scrollX.value = withTiming(nextIndex * intervalWidth, {
-      duration: scrollDuration,
-    });
-  }, [intervalWidth, scrollX, scrollXOffset]);
-
-  return {
-    scrollViewRef,
-    scrollXOffset,
-    intervalWidth,
-    setIntervalWidth,
-    onPressLeft,
-    onPressRight,
-  };
-}
-
 function useLayout({
   setIntervalWidth,
 }: {
   setIntervalWidth: (width: number) => void;
 }) {
   const insets = useSafeAreaInsets();
-
   const height = useSharedValue<number>(Dimensions.get("window").height);
-  const footerHeight = footerContentHeight + insets.bottom;
-  const itemHeight = useDerivedValue(() => height.value - footerHeight);
   const width = useSharedValue<number>(Dimensions.get("window").width);
+  const [layout, setLayout] = React.useState<"portrait" | "landscape">(() =>
+    width.value > height.value ? "landscape" : "portrait"
+  );
+
+  const footerHeight = footerContentHeight + insets.bottom;
+
+  const itemHeight = useDerivedValue(() => {
+    if (layout === "portrait") {
+      return height.value - footerHeight;
+    }
+
+    return height.value;
+  });
 
   const resizeTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
@@ -166,9 +78,12 @@ function useLayout({
 
         resizeTimeout.current = setTimeout(() => {
           setIntervalWidth(newWidth);
+          setLayout(newWidth > newHeight ? "landscape" : "portrait");
+
           resizeTimeout.current = null;
         }, intervalDebounce); // 100ms debounce, tweak to taste
       } else {
+        setLayout(newWidth > newHeight ? "landscape" : "portrait");
         setIntervalWidth(newWidth);
 
         // Block updates for the timeout
@@ -180,11 +95,6 @@ function useLayout({
     [height, width, setIntervalWidth]
   );
 
-  const itemStyle = useAnimatedStyle(() => ({
-    height: itemHeight.value + footerHeight,
-    width: width.value,
-  }));
-
   const itemFooterBottomPadding = insets.bottom;
 
   return {
@@ -192,49 +102,52 @@ function useLayout({
     footerHeight,
     itemHeight,
     width,
-    itemStyle,
     itemFooterBottomPadding,
     onLayout,
+    layout,
   };
 }
 
 export default React.memo(function TimersScrollView({
   ...props
 }: TimersScrollViewProps): React.ReactNode {
-  const scrolling = useScrolling();
-  const layout = useLayout(scrolling);
+  const [pageWidth, setPageWidth] = React.useState(
+    Dimensions.get("window").width
+  );
+
+  const { ScrollView, previous, next, scrollXOffset, Page } = usePagination({
+    pageCount: timers.length,
+    pageWidth,
+  });
+
+  const layout = useLayout({
+    setIntervalWidth: setPageWidth,
+  });
 
   return (
     <View flex={1} {...props}>
-      <Animated.ScrollView
-        onLayout={layout.onLayout}
-        style={{ flex: 1 }}
-        horizontal
-        snapToInterval={scrolling.intervalWidth}
-        pagingEnabled
-        decelerationRate="fast"
-        snapToAlignment="start"
-        showsHorizontalScrollIndicator={false}
-        ref={scrolling.scrollViewRef}
-      >
+      <ScrollView onLayout={layout.onLayout} style={styles.scrollView}>
         {timers.map(({ component: Component, name }, index) => (
-          <AnimatedView key={index} style={layout.itemStyle}>
+          <Page key={index}>
             <Component
               height={layout.itemHeight}
               width={layout.width}
               flex={1}
+              layout={layout.layout}
+              landscapeFooterHeight={layout.footerHeight}
+              landscapeFooterWidth={landscapeFooterWidth}
             />
             <ItemFooter
               text={name}
               pb={layout.itemFooterBottomPadding}
               height={layout.footerHeight}
             />
-          </AnimatedView>
+          </Page>
         ))}
-      </Animated.ScrollView>
+      </ScrollView>
       <View
         flexDirection="row"
-        width="100%"
+        width={layout.layout === "portrait" ? "100%" : landscapeFooterWidth}
         justify="space-between"
         height={layout.footerHeight}
         items="center"
@@ -250,34 +163,31 @@ export default React.memo(function TimersScrollView({
           size="$5"
           variant="outlined"
           circular
-          onPress={scrolling.onPressLeft}
+          onPress={previous}
         />
-        <View
+        <Indicators
           flex={1}
-          items="center"
-          flexDirection="row"
-          justify="center"
-          height={indicatorContainerHeight}
           self="flex-end"
-        >
-          {timers.map((_, index) => (
-            <Indicator
-              key={index}
-              mx="$space.1"
-              scrollX={scrolling.scrollXOffset}
-              interval={scrolling.intervalWidth}
-              index={index}
-            />
-          ))}
-        </View>
+          height={indicatorContainerHeight}
+          size={indicatorSize}
+          scrollX={scrollXOffset}
+          pageWidth={pageWidth}
+          pageCount={timers.length}
+        />
         <Button
           icon={ChevronRight}
           size="$5"
           variant="outlined"
           circular
-          onPress={scrolling.onPressRight}
+          onPress={next}
         />
       </View>
     </View>
   );
+});
+
+const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
 });
