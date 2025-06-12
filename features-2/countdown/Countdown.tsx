@@ -15,12 +15,14 @@ export interface CountdownProps {
   duration: DerivedValue<number | null>;
   color: DerivedValue<string>;
   fontSize: DerivedValue<number>;
+  opacity?: number;
 }
 
 export default React.memo(function Countdown({
   color,
   duration,
   fontSize,
+  opacity,
 }: CountdownProps): React.ReactNode {
   const days = useDerivedValue<number | null>(() => {
     if (duration.value === null) return null;
@@ -79,7 +81,7 @@ export default React.memo(function Countdown({
   });
 
   return (
-    <View flexDirection="row">
+    <View flexDirection="row" opacity={opacity}>
       <AnimatedNumbers
         value={days}
         color={color}

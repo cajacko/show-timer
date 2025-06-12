@@ -8,7 +8,6 @@ import { useScrollablePagination } from "@/features/pagination/usePagination";
 import { TimerState } from "@/features-2/timers/types";
 import Indicators from "@/features/pagination/Indicators";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export interface DisplaysScrollViewProps
   extends Omit<ViewProps, "height" | "width"> {
@@ -17,10 +16,31 @@ export interface DisplaysScrollViewProps
   pageWidth: number;
 }
 
-const displays: React.NamedExoticComponent<BorderTimerProps>[] = [
-  Timer,
-  Timer,
-  Timer,
+const displays: {
+  component: React.NamedExoticComponent<BorderTimerProps>;
+  props: Partial<BorderTimerProps>;
+}[] = [
+  {
+    component: Timer,
+    props: {
+      colorVariant: "border",
+      showText: true,
+    },
+  },
+  {
+    component: Timer,
+    props: {
+      colorVariant: "background",
+      showText: true,
+    },
+  },
+  {
+    component: Timer,
+    props: {
+      colorVariant: "background",
+      showText: false,
+    },
+  },
 ];
 
 export default React.memo(function DisplaysScrollView({
@@ -41,13 +61,14 @@ export default React.memo(function DisplaysScrollView({
   return (
     <View {...props}>
       <ScrollView>
-        {displays.map((Component, i) => (
+        {displays.map(({ component: Component, props: componentProps }, i) => (
           <Page key={i}>
             <Component
               height={height}
               width={width}
               duration={duration}
               state={state}
+              {...componentProps}
             />
           </Page>
         ))}

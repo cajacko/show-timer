@@ -22,4 +22,6 @@ export interface TimerProps extends TimerControls {
   fullScreenAmount?: SharedValue<number>;
   back?: () => void;
   close?: () => void;
+  colorVariant?: "border" | "background";
+  showText?: boolean;
 }

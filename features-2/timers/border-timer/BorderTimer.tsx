@@ -28,6 +28,8 @@ export default React.memo(function BorderTimer({
   state,
   start,
   resume,
+  colorVariant = "border",
+  showText = true,
 }: BorderTimerProps): React.ReactNode {
   const duration = useDerivedValue<number | null>(
     () => (durationProp.value === null ? 0 : durationProp.value),
@@ -37,7 +39,7 @@ export default React.memo(function BorderTimer({
   const animatedStyle = useAnimatedStyle(() => ({
     height: height.value,
     width: width.value,
-    padding: Math.round(width.value * 0.03),
+    padding: colorVariant === "border" ? Math.round(width.value * 0.03) : 0,
     backgroundColor: "red",
   }));
 
@@ -107,9 +109,10 @@ export default React.memo(function BorderTimer({
         items="center"
         justify="center"
         flex={1}
-        background="black"
         // TODO: Fix this in native
-        style={{ backgroundColor: "black" }}
+        style={{
+          backgroundColor: colorVariant === "border" ? "black" : "transparent",
+        }}
       >
         {back && (
           <AnimatedView
@@ -127,6 +130,7 @@ export default React.memo(function BorderTimer({
             duration={duration}
             color={textColor}
             fontSize={fontSize}
+            opacity={showText ? 1 : 0.2}
           />
 
           {(reset || pause) && (
