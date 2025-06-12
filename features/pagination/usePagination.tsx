@@ -2,14 +2,18 @@ import React from "react";
 import Animated, {
   AnimatedRef,
   scrollTo,
+  SharedValue,
   useAnimatedRef,
+  useAnimatedStyle,
   useDerivedValue,
   useScrollViewOffset,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { ScrollViewProps } from "react-native";
+import { ScrollViewProps, ViewProps as RNViewProps } from "react-native";
 import { View, ViewProps } from "tamagui";
+
+const AnimatedView = Animated.createAnimatedComponent(View);
 
 export interface PaginationProps {
   pageWidth: number;
@@ -22,47 +26,167 @@ type InjectedProps = ScrollViewProps & {
 };
 
 function withScrollView(injectedProps: InjectedProps) {
-  return React.memo(function ScrollView(props: ScrollViewProps) {
+  return React.memo<ScrollViewProps>(function ScrollView(props) {
     return <Animated.ScrollView {...injectedProps} {...props} />;
+  });
+}
+
+function withControlledScrollView({
+  pageWidth,
+  scrollXOffset,
+  pageCount,
+}: {
+  pageWidth: number;
+  scrollXOffset: SharedValue<number>;
+  pageCount: number;
+}) {
+  /**
+   * We can't use <AnimatedView style={animatedLeftPosition} position="absolute">{children}</AnimatedView>
+   * here as it prevents nested scroll views from working. This appears to be a Animated.View
+   * issue. So instead we use animated spacers to the left and right and "center" positioning to
+   * achieve the same effect.
+   */
+  return React.memo(function ControlledScrollView({
+    children,
+    ...props
+  }: RNViewProps) {
+    const leftSpacerStyle = useAnimatedStyle(() => {
+      const remainingWidth = (pageCount - 1) * pageWidth - scrollXOffset.value;
+      return {
+        width: remainingWidth,
+      };
+    });
+
+    const rightSpacerStyle = useAnimatedStyle(() => {
+      return {
+        width: scrollXOffset.value,
+      };
+    });
+
+    return (
+      <View
+        width={pageWidth}
+        minW={pageWidth}
+        maxW={pageWidth}
+        overflow="hidden"
+        flexDirection="row"
+        justify="center"
+        items="center"
+        {...props}
+      >
+        <View flexDirection="row">
+          <AnimatedView style={leftSpacerStyle} height="100%" />
+          {children}
+          <AnimatedView style={rightSpacerStyle} height="100%" />
+        </View>
+      </View>
+    );
   });
 }
 
 function withPage(pageWidth: number) {
   return React.memo(function Page(props: ViewProps) {
-    return <View width={pageWidth} height="100%" flex={1} {...props} />;
+    return (
+      <View
+        width={pageWidth}
+        minW={pageWidth}
+        maxW={pageWidth}
+        height="100%"
+        flex={1}
+        {...props}
+      />
+    );
   });
 }
 
-export default function usePagination({
+function useControls({
+  pageCount,
+  pageWidth,
+  scrollXOffset,
+  scrollDuration,
+  scrollXControl,
+}: {
+  scrollXOffset: SharedValue<number>;
+  scrollXControl: SharedValue<number>;
+  pageWidth: number;
+  pageCount: number;
+  scrollDuration: number;
+}) {
+  const previous = React.useCallback(() => {
+    const currentIndex = Math.round(scrollXOffset.value / pageWidth);
+    const nextIndex = currentIndex === 0 ? pageCount - 1 : currentIndex - 1;
+
+    scrollXControl.value = withTiming(nextIndex * pageWidth, {
+      duration: scrollDuration,
+    });
+  }, [pageWidth, scrollXOffset, pageCount, scrollDuration, scrollXControl]);
+
+  const next = React.useCallback(() => {
+    const currentIndex = Math.round(scrollXOffset.value / pageWidth);
+    const nextIndex = currentIndex >= pageCount - 1 ? 0 : currentIndex + 1;
+
+    scrollXControl.value = withTiming(nextIndex * pageWidth, {
+      duration: scrollDuration,
+    });
+  }, [pageWidth, scrollXOffset, pageCount, scrollDuration, scrollXControl]);
+
+  return { previous, next };
+}
+
+export function useControlledPagination({
+  pageWidth,
+  scrollDuration = 300,
+  pageCount,
+}: PaginationProps) {
+  const scrollXOffset = useSharedValue(0); // only use internally
+
+  const controls = useControls({
+    pageCount,
+    pageWidth,
+    scrollXOffset,
+    scrollXControl: scrollXOffset,
+    scrollDuration,
+  });
+
+  const { Page, ControlledScrollView } = React.useMemo(() => {
+    return {
+      Page: withPage(pageWidth),
+      ControlledScrollView: withControlledScrollView({
+        pageWidth,
+        scrollXOffset: scrollXOffset,
+        pageCount,
+      }),
+    };
+  }, [pageWidth, scrollXOffset, pageCount]);
+
+  return {
+    ...controls,
+    scrollXOffset,
+    Page,
+    ControlledScrollView,
+  };
+}
+
+export function useScrollablePagination({
   pageWidth,
   scrollDuration = 300,
   pageCount,
 }: PaginationProps) {
   const scrollViewRef = useAnimatedRef<Animated.ScrollView>();
-  const _scrollX = useSharedValue(0); // only use internally
+  const scrollXControl = useSharedValue(0); // only use internally
   const scrollXOffset = useScrollViewOffset(scrollViewRef);
 
   useDerivedValue(() => {
-    scrollTo(scrollViewRef, _scrollX.value, 0, true);
+    scrollTo(scrollViewRef, scrollXControl.value, 0, true);
   });
 
-  const previous = React.useCallback(() => {
-    const currentIndex = Math.round(scrollXOffset.value / pageWidth);
-    const nextIndex = currentIndex === 0 ? pageCount : currentIndex - 1;
-
-    _scrollX.value = withTiming(nextIndex * pageWidth, {
-      duration: scrollDuration,
-    });
-  }, [pageWidth, _scrollX, scrollXOffset, pageCount, scrollDuration]);
-
-  const next = React.useCallback(() => {
-    const currentIndex = Math.round(scrollXOffset.value / pageWidth);
-    const nextIndex = currentIndex === pageCount ? 0 : currentIndex + 1;
-
-    _scrollX.value = withTiming(nextIndex * pageWidth, {
-      duration: scrollDuration,
-    });
-  }, [pageWidth, _scrollX, scrollXOffset, pageCount, scrollDuration]);
+  const controls = useControls({
+    pageCount,
+    pageWidth,
+    scrollXOffset,
+    scrollXControl: scrollXControl,
+    scrollDuration,
+  });
 
   const { ScrollView, scrollViewProps, Page } = React.useMemo(() => {
     const scrollViewProps: InjectedProps = {
@@ -72,8 +196,8 @@ export default function usePagination({
       decelerationRate: "fast",
       snapToAlignment: "start",
       showsHorizontalScrollIndicator: false,
-      ref: scrollViewRef,
       disableIntervalMomentum: true,
+      ref: scrollViewRef,
     };
 
     return {
@@ -84,10 +208,8 @@ export default function usePagination({
   }, [pageWidth, scrollViewRef]);
 
   return {
-    scrollViewRef,
+    ...controls,
     scrollXOffset,
-    previous,
-    next,
     scrollViewProps,
     ScrollView,
     Page,

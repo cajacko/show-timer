@@ -1,36 +1,32 @@
 import NumberPad from "@/features-2/number-pad/NumberPad";
 import StageSelector from "@/features-2/stages/StageSelector";
-import Timer from "@/features-2/timers/border-timer/BorderTimer";
-import { TimerState } from "@/features-2/timers/types";
 import React from "react";
-import {
-  SharedValue,
-  useDerivedValue,
-  useSharedValue,
-} from "react-native-reanimated";
+import { useDerivedValue } from "react-native-reanimated";
 import { View, ViewProps } from "tamagui";
+import DisplaysScrollView from "@/features/displays/DisplaysScrollView";
 
 export interface TimerScreenLayoutProps
   extends Omit<ViewProps, "height" | "width"> {
-  height: SharedValue<number>;
-  width: SharedValue<number>;
+  height: number;
+  width: number;
 }
 
 export default React.memo(function TimerScreenLayout({
   height: heightProp,
-  width,
+  width: widthProp,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
-  const duration = useSharedValue<number | null>(60);
-  const state = useSharedValue<TimerState>({ type: "stopped" });
-
   const height = useDerivedValue<number>(() => {
-    return heightProp.value / 3;
+    return heightProp / 3;
+  });
+
+  const width = useDerivedValue<number>(() => {
+    return widthProp;
   });
 
   return (
     <View flexDirection="column" {...props}>
-      <Timer duration={duration} state={state} width={width} height={height} />
+      <DisplaysScrollView height={height} width={width} pageWidth={widthProp} />
       <StageSelector />
       <View flex={1} items="center" justify="center">
         <NumberPad />

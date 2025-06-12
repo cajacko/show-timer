@@ -1,7 +1,6 @@
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import React from "react";
 import { Dimensions, StyleSheet } from "react-native";
-import { useDerivedValue, useSharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, ScrollViewProps, SizableText, View, ViewProps } from "tamagui";
 import ClockTimer from "./ClockTimer";
@@ -9,7 +8,7 @@ import DurationTimer from "./DurationTimer";
 import Timer from "./Timer";
 import { TimerCommonProps } from "./Timer.types";
 import Indicators from "@/features/pagination/Indicators";
-import usePagination from "@/features/pagination/usePagination";
+import { useControlledPagination } from "@/features/pagination/usePagination";
 
 export type TimersScrollViewProps = object;
 
@@ -39,17 +38,16 @@ function ItemFooter({
   );
 }
 
-function useLayout({
-  setIntervalWidth,
-}: {
-  setIntervalWidth: (width: number) => void;
-}) {
+function useLayout() {
   const insets = useSafeAreaInsets();
-  const height = useSharedValue<number>(Dimensions.get("window").height);
-  const width = useSharedValue<number>(Dimensions.get("window").width);
+  const [size, setSize] = React.useState({
+    height: Dimensions.get("window").height,
+    width: Dimensions.get("window").width,
+  });
 
   const footerHeight = footerContentHeight + insets.bottom;
 
+  const sizeRef = React.useRef(size);
   const resizeTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
@@ -58,14 +56,16 @@ function useLayout({
     (event) => {
       const { height: newHeight, width: newWidth } = event.nativeEvent.layout;
 
-      height.value = newHeight;
-      width.value = newWidth;
+      sizeRef.current = {
+        height: newHeight,
+        width: newWidth,
+      };
 
       /**
        * Updates with the latest values which are always the reanimated values
        */
       function update() {
-        setIntervalWidth(width.value);
+        setSize(sizeRef.current);
 
         resizeTimeout.current = null;
       }
@@ -76,16 +76,15 @@ function useLayout({
         resizeTimeout.current = setTimeout(update, intervalDebounce);
       }
     },
-    [height, width, setIntervalWidth]
+    []
   );
 
   const itemFooterBottomPadding = insets.bottom;
 
   return {
+    ...size,
     insets,
     footerHeight,
-    height,
-    width,
     itemFooterBottomPadding,
     onLayout,
   };
@@ -94,22 +93,20 @@ function useLayout({
 export default React.memo(function TimersScrollView({
   ...props
 }: TimersScrollViewProps): React.ReactNode {
-  const [pageWidth, setPageWidth] = React.useState(
-    Dimensions.get("window").width
-  );
+  const layout = useLayout();
 
-  const { ScrollView, previous, next, scrollXOffset, Page } = usePagination({
-    pageCount: timers.length,
-    pageWidth,
-  });
-
-  const layout = useLayout({
-    setIntervalWidth: setPageWidth,
-  });
+  const { ControlledScrollView, previous, next, scrollXOffset, Page } =
+    useControlledPagination({
+      pageCount: timers.length,
+      pageWidth: layout.width,
+    });
 
   return (
     <View flex={1} {...props}>
-      <ScrollView onLayout={layout.onLayout} style={styles.scrollView}>
+      <ControlledScrollView
+        onLayout={layout.onLayout}
+        style={styles.scrollView}
+      >
         {timers.map(({ component: Component, name }, index) => (
           <Page key={index}>
             <Component height={layout.height} width={layout.width} flex={1} />
@@ -120,7 +117,7 @@ export default React.memo(function TimersScrollView({
             />
           </Page>
         ))}
-      </ScrollView>
+      </ControlledScrollView>
       <View
         flexDirection="row"
         width="100%"
@@ -147,7 +144,7 @@ export default React.memo(function TimersScrollView({
           height={indicatorContainerHeight}
           size={indicatorSize}
           scrollX={scrollXOffset}
-          pageWidth={pageWidth}
+          pageWidth={layout.width}
           pageCount={timers.length}
         />
         <Button
