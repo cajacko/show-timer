@@ -138,65 +138,63 @@ export default React.memo(function BorderTimer({
             opacity={showText ? 1 : 0.2}
           />
 
-          {(reset || pause) && (
-            <AnimatedView
-              flexDirection="row"
-              style={actionAnimatedStyle}
-              position="absolute"
-              t="100%"
-              l={-100}
-              r={-100}
-              justify="center"
-            >
-              {reset && (
-                <Button
-                  icon={TimerReset}
-                  circular
-                  size="$5"
-                  onPress={reset}
-                  mr={!!reset ? "$space.4" : undefined}
-                />
-              )}
-              {(pause || start || resume) && (
-                <View position="relative">
-                  <Button circular size="$5" opacity={0} z={1} disabled />
-                  {pause && (
-                    <AnimatedButton
-                      icon={Pause}
-                      circular
-                      size="$5"
-                      onPress={pause}
-                      style={pauseStyle}
-                      position="absolute"
-                      z={2}
-                    />
-                  )}
-                  {start && (
-                    <AnimatedButton
-                      icon={Play}
-                      circular
-                      size="$5"
-                      onPress={start}
-                      position="absolute"
-                      style={startStyle}
-                      z={2}
-                    />
-                  )}
-                  {resume && (
-                    <AnimatedButton
-                      icon={Play}
-                      circular
-                      size="$5"
-                      onPress={resume}
-                      position="absolute"
-                      style={resumeStyle}
-                      z={2}
-                    />
-                  )}
-                </View>
-              )}
-            </AnimatedView>
-          )}
+          <AnimatedView
+            flexDirection="row"
+            style={actionAnimatedStyle}
+            position="absolute"
+            t="100%"
+            l={-100}
+            r={-100}
+            justify="center"
+          >
+            {reset && (
+              <Button
+                icon={TimerReset}
+                circular
+                size="$5"
+                onPress={reset}
+                mr={!!reset ? "$space.4" : undefined}
+              />
+            )}
+            {(pause || start || resume) && (
+              <View position="relative">
+                <Button circular size="$5" opacity={0} z={1} disabled />
+                {pause && (
+                  <AnimatedButton
+                    icon={Pause}
+                    circular
+                    size="$5"
+                    onPress={pause}
+                    style={pauseStyle}
+                    position="absolute"
+                    z={2}
+                  />
+                )}
+                {start && (
+                  <AnimatedButton
+                    icon={Play}
+                    circular
+                    size="$5"
+                    onPress={start}
+                    position="absolute"
+                    style={startStyle}
+                    z={2}
+                  />
+                )}
+                {resume && (
+                  <AnimatedButton
+                    icon={Play}
+                    circular
+                    size="$5"
+                    onPress={resume}
+                    position="absolute"
+                    style={resumeStyle}
+                    z={2}
+                  />
+                )}
+              </View>
+            )}
+          </AnimatedView>
         </View>
       </View>
     </Animated.View>

@@ -2,13 +2,17 @@ import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import React from "react";
 import { Dimensions, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, ScrollViewProps, SizableText, View, ViewProps } from "tamagui";
+import { Button, ScrollViewProps, View } from "tamagui";
 import ClockTimer from "./ClockTimer";
 import DurationTimer from "./DurationTimer";
 import Timer from "./Timer";
 import { TimerCommonProps } from "./Timer.types";
 import Indicators from "@/features/pagination/Indicators";
 import { useControlledPagination } from "@/features/pagination/usePagination";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 
 export type TimersScrollViewProps = object;
 
@@ -17,12 +21,12 @@ const timers: {
   name: string;
   description: string;
 }[] = [
-  { component: Timer, name: "Timer", description: "Count up from 0" },
   {
     component: ClockTimer,
     name: "Clock",
     description: "It's a clock, it shows the time",
   },
+  { component: Timer, name: "Timer", description: "Count up from 0" },
   {
     component: DurationTimer,
     name: "Duration",
@@ -35,24 +39,10 @@ const footerContentHeight = 100;
 const indicatorSize = 15;
 const indicatorContainerHeight = indicatorSize + 10;
 
-function ItemFooter({
-  title,
-  description,
-  height,
-  ...props
-}: { title: string; description: string; height: number } & Omit<
-  ViewProps,
-  "text"
->) {
-  return (
-    <View height={height} items="center" justify="center" {...props}>
-      <SizableText size="$6">{title}</SizableText>
-      <SizableText size="$2">{description}</SizableText>
-    </View>
-  );
-}
+const AnimatedView = Animated.createAnimatedComponent(View);
 
 function useLayout() {
+  const fullScreenAmount = useSharedValue(0);
   const insets = useSafeAreaInsets();
   const [size, setSize] = React.useState({
     height: Dimensions.get("window").height,
@@ -95,12 +85,25 @@ function useLayout() {
 
   const itemFooterBottomPadding = insets.bottom;
 
+  const footerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: 1 - fullScreenAmount.value,
+      transform: [
+        {
+          translateY: fullScreenAmount.value * footerContentHeight,
+        },
+      ],
+    };
+  });
+
   return {
     ...size,
+    footerStyle,
     insets,
     footerHeight,
     itemFooterBottomPadding,
     onLayout,
+    fullScreenAmount,
   };
 }
 
@@ -123,17 +126,20 @@ export default React.memo(function TimersScrollView({
       >
         {timers.map(({ component: Component, name, description }, index) => (
           <Page key={index}>
-            <Component height={layout.height} width={layout.width} flex={1} />
-            <ItemFooter
+            <Component
+              height={layout.height}
+              width={layout.width}
+              flex={1}
+              fullScreenAmount={layout.fullScreenAmount}
               title={name}
               description={description}
-              pb={layout.itemFooterBottomPadding}
-              height={layout.footerHeight}
+              footerHeight={layout.footerHeight}
+              footerPb={layout.itemFooterBottomPadding}
             />
           </Page>
         ))}
       </ControlledScrollView>
-      <View
+      <AnimatedView
         flexDirection="row"
         width="100%"
         justify="space-between"
@@ -145,6 +151,7 @@ export default React.memo(function TimersScrollView({
         r={0}
         px="$space.2"
         pb={layout.insets.bottom}
+        style={layout.footerStyle}
       >
         <Button
           icon={ChevronLeft}
@@ -169,7 +176,7 @@ export default React.memo(function TimersScrollView({
           circular
           onPress={next}
         />
-      </View>
+      </AnimatedView>
     </View>
   );
 });

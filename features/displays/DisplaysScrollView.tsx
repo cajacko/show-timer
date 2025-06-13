@@ -1,5 +1,9 @@
 import React from "react";
-import { SharedValue, useSharedValue } from "react-native-reanimated";
+import Animated, {
+  SharedValue,
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import { Button, View, ViewProps } from "tamagui";
 import Timer, {
   BorderTimerProps,
@@ -9,15 +13,6 @@ import { TimerState } from "@/features-2/timers/types";
 import Indicators from "@/features/pagination/Indicators";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import { Stage } from "@/features/stages/Stage.types";
-
-export interface DisplaysScrollViewProps
-  extends Omit<ViewProps, "height" | "width"> {
-  height: SharedValue<number>;
-  width: SharedValue<number>;
-  pageWidth: number;
-  duration: SharedValue<number | null>;
-  stage: Stage;
-}
 
 const displays: {
   component: React.NamedExoticComponent<BorderTimerProps>;
@@ -46,12 +41,27 @@ const displays: {
   },
 ];
 
+const AnimatedView = Animated.createAnimatedComponent(View);
+
+export interface DisplaysScrollViewProps
+  extends Omit<ViewProps, "height" | "width" | "start"> {
+  height: SharedValue<number>;
+  width: SharedValue<number>;
+  pageWidth: number;
+  duration: SharedValue<number | null>;
+  stage: Stage;
+  start?: () => void;
+  fullScreenAmount: SharedValue<number>;
+}
+
 export default React.memo(function DisplaysScrollView({
   height,
   width,
   pageWidth,
   duration,
   stage,
+  start,
+  fullScreenAmount,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
   const { ScrollView, Page, scrollXOffset, previous, next } =
@@ -61,6 +71,39 @@ export default React.memo(function DisplaysScrollView({
     });
 
   const state = useSharedValue<TimerState>({ type: "stopped" });
+
+  const leftChevronStyle = useAnimatedStyle(() => {
+    return {
+      opacity: 1 - fullScreenAmount.value,
+      transform: [
+        {
+          translateX: fullScreenAmount.value * -100, // Move left when in full screen
+        },
+      ],
+    };
+  });
+
+  const rightChevronStyle = useAnimatedStyle(() => {
+    return {
+      opacity: 1 - fullScreenAmount.value,
+      transform: [
+        {
+          translateX: fullScreenAmount.value * 100, // Move right when in full screen
+        },
+      ],
+    };
+  });
+
+  const indicatorsStyle = useAnimatedStyle(() => {
+    return {
+      opacity: 1 - fullScreenAmount.value,
+      transform: [
+        {
+          translateY: fullScreenAmount.value * 100, // Move down when in full screen
+        },
+      ],
+    };
+  });
 
   return (
     <View {...props}>
@@ -73,32 +116,35 @@ export default React.memo(function DisplaysScrollView({
               width={width}
               duration={duration}
               state={state}
+              start={start}
               {...componentProps}
             />
           </Page>
         ))}
       </ScrollView>
-      <View
+      <AnimatedView
         position="absolute"
         t={0}
         l="$space.2"
         b={0}
         items="center"
         justify="center"
+        style={leftChevronStyle}
       >
         <Button icon={ChevronLeft} size="$5" circular onPress={previous} />
-      </View>
-      <View
+      </AnimatedView>
+      <AnimatedView
         position="absolute"
         r="$space.2"
         b={0}
         t={0}
         items="center"
         justify="center"
+        style={rightChevronStyle}
       >
         <Button icon={ChevronRight} size="$5" circular onPress={next} />
-      </View>
-      <View
+      </AnimatedView>
+      <AnimatedView
         position="absolute"
         width="100%"
         b="$space.2"
@@ -106,6 +152,7 @@ export default React.memo(function DisplaysScrollView({
         r={0}
         items="center"
         justify="center"
+        style={indicatorsStyle}
       >
         <Indicators
           b={0}
@@ -113,7 +160,7 @@ export default React.memo(function DisplaysScrollView({
           scrollX={scrollXOffset}
           pageWidth={pageWidth}
         />
-      </View>
+      </AnimatedView>
     </View>
   );
 });
