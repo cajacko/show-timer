@@ -8,6 +8,7 @@ import { Circle, View, ViewProps } from "tamagui";
 import StageButton from "./StageButton";
 import { Stage } from "./Stage.types";
 import stageColors from "./stageColors";
+import { ChevronRight } from "@tamagui/lucide-icons";
 
 export type { Stage };
 
@@ -100,18 +101,33 @@ export default React.memo(function StageSelector({
     </View>
   );
 
+  const horizontalSpacing = 10;
+
   return (
     <View width="100%" {...props}>
       {activePosition === "top" && !!active && activeChildren}
       <View flexDirection="row" justify="center">
-        {stages.map(({ key, value }) => (
-          <View key={key} width="33.33%" px={spacing}>
+        {stages.map(({ key, value }, i) => (
+          <View key={key} width="33.33%" px={spacing} position="relative">
             <StageButton
               value={value}
               borderColor={stageColors[key]}
               onPress={actions[key]}
-              width="100%"
+              mx={horizontalSpacing}
             />
+            {i < stages.length - 1 && (
+              <View
+                position="absolute"
+                r={-horizontalSpacing}
+                width={horizontalSpacing * 2}
+                t={0}
+                b={0}
+                items="center"
+                justify="center"
+              >
+                <ChevronRight size={horizontalSpacing * 2} />
+              </View>
+            )}
           </View>
         ))}
       </View>

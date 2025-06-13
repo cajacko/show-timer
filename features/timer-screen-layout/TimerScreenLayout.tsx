@@ -1,4 +1,4 @@
-import NumberPad from "@/features/number-pad/NumberPad";
+import NumberPad, { NumberPadProps } from "@/features/number-pad/NumberPad";
 import StageSelector, {
   Stage,
   StageSelectorProps,
@@ -19,6 +19,7 @@ export interface TimerScreenLayoutProps
   width: number;
   selectedStage?: Stage;
   onChangeSelectedStage?: StageSelectorProps["onChange"];
+  onNumberPadAction?: NumberPadProps["onAction"];
 }
 
 export default React.memo(function TimerScreenLayout({
@@ -31,6 +32,7 @@ export default React.memo(function TimerScreenLayout({
   onChangeSelectedStage,
   duration,
   stage,
+  onNumberPadAction,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const height = useDerivedValue<number>(() => {
@@ -62,7 +64,7 @@ export default React.memo(function TimerScreenLayout({
         my="$space.4"
       />
       <View flex={1} items="center" justify="center">
-        <NumberPad borderColor={stageColor} />
+        <NumberPad borderColor={stageColor} onAction={onNumberPadAction} />
       </View>
     </View>
   );

@@ -13,13 +13,7 @@ export default React.memo(function StageButton({
   ...props
 }: StageButtonProps): React.ReactNode {
   return (
-    <Button
-      position="relative"
-      width="$8"
-      items="center"
-      justify="center"
-      {...props}
-    >
+    <Button position="relative" items="center" justify="center" {...props}>
       <>
         {value && <ButtonText>{value}</ButtonText>}
         {borderColor && (
