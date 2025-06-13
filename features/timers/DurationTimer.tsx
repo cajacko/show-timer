@@ -4,8 +4,11 @@ import TimerScreenLayout, {
 } from "../timer-screen-layout/TimerScreenLayout";
 import { TimerCommonProps } from "./Timer.types";
 import { useSharedValue } from "react-native-reanimated";
+import { StageValue } from "@/features/stages/StageButton";
 
 export type DurationTimerProps = TimerCommonProps;
+
+const nullValue: StageValue = [];
 
 export default React.memo(function DurationTimer({
   ...props
@@ -17,9 +20,9 @@ export default React.memo(function DurationTimer({
 
   return (
     <TimerScreenLayout
-      okayValue="0"
-      warningValue="0"
-      alertValue="0"
+      okayValue={nullValue}
+      warningValue={nullValue}
+      alertValue={nullValue}
       stage="okay"
       selectedStage={selectedStage}
       onChangeSelectedStage={setSelectedStage}

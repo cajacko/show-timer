@@ -5,7 +5,7 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Circle, View, ViewProps } from "tamagui";
-import StageButton from "./StageButton";
+import StageButton, { StageValue } from "./StageButton";
 import { Stage } from "./Stage.types";
 import stageColors from "./stageColors";
 import { ChevronRight } from "@tamagui/lucide-icons";
@@ -15,9 +15,9 @@ export type { Stage };
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 export interface StageSelectorProps extends ViewProps {
-  okayValue?: string;
-  warningValue?: string;
-  alertValue?: string;
+  okayValue?: StageValue;
+  warningValue?: StageValue;
+  alertValue?: StageValue;
   activePosition?: "top" | "bottom";
   active?: Stage;
   onChange?: (stage: Stage) => void;
@@ -35,7 +35,7 @@ export default React.memo(function StageSelector({
   ...props
 }: StageSelectorProps): React.ReactNode {
   const stages = React.useMemo(() => {
-    const result: { key: Stage; value: string }[] = [];
+    const result: { key: Stage; value: StageValue }[] = [];
     if (okayValue !== undefined) result.push({ key: "okay", value: okayValue });
     if (warningValue !== undefined)
       result.push({ key: "warning", value: warningValue });
