@@ -12,8 +12,8 @@ import {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { NumberButtonValue } from "@/features/number-pad/NumberButton";
 import { StageValue } from "@/features/stages/StageButton";
+import getActionValue, { nullValue } from "./getActionValue";
 
 export type ClockTimerProps = TimerCommonProps;
 
@@ -63,36 +63,6 @@ export function useClockDuration(
   return duration;
 }
 
-const nullValue: StageValue = [];
-
-function getActionValue(
-  prevValue: StageValue,
-  action: NumberButtonValue
-): StageValue {
-  if (action.type === "clear") return nullValue;
-
-  if (action.type === "backspace") {
-    if (prevValue.length === 0) return nullValue;
-
-    return prevValue.slice(0, -1);
-  }
-
-  if (action.type === "number") {
-    const newValue = [action.value, ...prevValue];
-    // Limit the value to 6 digits
-    return newValue.length > 6 ? newValue.slice(0, 6) : newValue;
-  }
-
-  if (action.type === "double-zero") {
-    // Add two zeros to the end of the value
-    const newValue = [0, 0, ...prevValue];
-    // Limit the value to 6 digits
-    return newValue.length > 6 ? newValue.slice(0, 6) : newValue;
-  }
-
-  return prevValue;
-}
-
 export default React.memo(function ClockTimer({
   ...props
 }: ClockTimerProps): React.ReactNode {
@@ -124,6 +94,7 @@ export default React.memo(function ClockTimer({
       selectedStage={selectedStage}
       onChangeSelectedStage={setSelectedStage}
       onNumberPadAction={onNumberPadAction}
+      stageButtonVariant="clock"
       {...props}
     />
   );
