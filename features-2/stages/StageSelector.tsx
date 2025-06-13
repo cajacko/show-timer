@@ -115,7 +115,7 @@ export default React.memo(function StageSelector({
         <View flex={1} px={spacing}>
           <StageButton
             durations={green}
-            color="green"
+            borderColor="$green9"
             onPress={actions.green}
             width="100%"
           />
@@ -123,7 +123,7 @@ export default React.memo(function StageSelector({
         <View flex={1} px={spacing}>
           <StageButton
             durations={yellow}
-            color="yellow"
+            borderColor="$yellow9"
             onPress={actions.yellow}
             width="100%"
           />
@@ -131,7 +131,7 @@ export default React.memo(function StageSelector({
         <View flex={1} px={spacing}>
           <StageButton
             durations={red}
-            color="red"
+            borderColor="$red9"
             onPress={actions.red}
             width="100%"
           />

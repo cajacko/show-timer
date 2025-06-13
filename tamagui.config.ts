@@ -4,6 +4,12 @@ import { createTamagui } from "tamagui";
 
 const tamaguiConfig = createTamagui({
   ...defaultConfig,
+  themes: {
+    ...defaultConfig.themes,
+    dark: {
+      ...defaultConfig.themes.dark,
+    },
+  },
   animations: createAnimations({
     fast: {
       type: "spring",

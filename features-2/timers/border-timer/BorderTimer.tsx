@@ -9,8 +9,9 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { Button, View } from "tamagui";
+import { Button, useTheme, View } from "tamagui";
 import { TimerProps } from "../types";
+import stageColors from "@/features/stages/stageColors";
 
 export type BorderTimerProps = TimerProps;
 
@@ -31,6 +32,9 @@ export default React.memo(function BorderTimer({
   colorVariant = "border",
   showText = true,
 }: BorderTimerProps): React.ReactNode {
+  const theme = useTheme();
+  const backgroundColor = theme[stageColors.okay]?.val;
+
   const duration = useDerivedValue<number | null>(
     () => (durationProp.value === null ? 0 : durationProp.value),
     [durationProp]
@@ -40,7 +44,7 @@ export default React.memo(function BorderTimer({
     height: height.value,
     width: width.value,
     padding: colorVariant === "border" ? Math.round(width.value * 0.03) : 0,
-    backgroundColor: "red",
+    backgroundColor: backgroundColor,
   }));
 
   const actionAnimatedStyle = useAnimatedStyle(() => ({

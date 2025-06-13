@@ -1,19 +1,15 @@
 import React from "react";
-import { Button, ButtonProps, View, ViewProps } from "tamagui";
-import DurationDisplay from "../duration-display/DurationDisplay";
-import { Durations } from "../duration-picker/types";
+import { Button, ButtonProps, View, ViewProps, ButtonText } from "tamagui";
 
 export interface StageButtonProps
   extends Omit<ButtonProps, "color">,
     Pick<ViewProps, "borderColor"> {
-  durations?: Durations;
-  flash?: boolean;
+  value?: string;
 }
 
 export default React.memo(function StageButton({
-  durations,
+  value,
   borderColor,
-  flash,
   ...props
 }: StageButtonProps): React.ReactNode {
   return (
@@ -25,12 +21,7 @@ export default React.memo(function StageButton({
       {...props}
     >
       <>
-        <DurationDisplay
-          {...durations}
-          valueSize="$5"
-          unitSize="$2"
-          spacing="$space.1"
-        />
+        {value && <ButtonText>{value}</ButtonText>}
         {borderColor && (
           <View
             borderWidth={2}

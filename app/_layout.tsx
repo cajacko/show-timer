@@ -1,19 +1,32 @@
 import Tamagui from "@/context/Tamagui";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
+import { useTheme } from "tamagui";
 
-import { useColorScheme } from "@/hooks/useColorScheme";
+function Content() {
+  const theme = useTheme();
+  const backgroundValue = theme.background.val;
+
+  return (
+    <GestureHandlerRootView
+      style={{ flex: 1, backgroundColor: backgroundValue }}
+    >
+      <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+      <StatusBar style="auto" />
+    </GestureHandlerRootView>
+  );
+}
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme() ?? "dark";
+  const colorScheme = "dark";
+
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     Inter: require("@tamagui/font-inter/otf/Inter-Medium.otf"),
@@ -26,18 +39,10 @@ export default function RootLayout() {
   }
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Tamagui colorScheme={colorScheme}>
-        <ThemeProvider
-          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-        >
-          <Stack>
-            <Stack.Screen name="index" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </Stack>
-          <StatusBar style="auto" />
-        </ThemeProvider>
-      </Tamagui>
-    </GestureHandlerRootView>
+    <Tamagui colorScheme={colorScheme}>
+      <ThemeProvider value={DarkTheme}>
+        <Content />
+      </ThemeProvider>
+    </Tamagui>
   );
 }

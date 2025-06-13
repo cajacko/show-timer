@@ -15,10 +15,19 @@ export type TimersScrollViewProps = object;
 const timers: {
   component: React.NamedExoticComponent<TimerCommonProps>;
   name: string;
+  description: string;
 }[] = [
-  { component: Timer, name: "Timer" },
-  { component: DurationTimer, name: "Duration" },
-  { component: ClockTimer, name: "Clock" },
+  { component: Timer, name: "Timer", description: "Count up from 0" },
+  {
+    component: DurationTimer,
+    name: "Duration",
+    description: "Count down from a set duration",
+  },
+  {
+    component: ClockTimer,
+    name: "Clock",
+    description: "It's a clock, it shows the time",
+  },
 ];
 
 const intervalDebounce = 100; // 100ms debounce, tweak to taste
@@ -27,13 +36,18 @@ const indicatorSize = 15;
 const indicatorContainerHeight = indicatorSize + 10;
 
 function ItemFooter({
-  text,
+  title,
+  description,
   height,
   ...props
-}: { text: string; height: number } & Omit<ViewProps, "text">) {
+}: { title: string; description: string; height: number } & Omit<
+  ViewProps,
+  "text"
+>) {
   return (
     <View height={height} items="center" justify="center" {...props}>
-      <SizableText size="$6">{text}</SizableText>
+      <SizableText size="$6">{title}</SizableText>
+      <SizableText size="$2">{description}</SizableText>
     </View>
   );
 }
@@ -107,11 +121,12 @@ export default React.memo(function TimersScrollView({
         onLayout={layout.onLayout}
         style={styles.scrollView}
       >
-        {timers.map(({ component: Component, name }, index) => (
+        {timers.map(({ component: Component, name, description }, index) => (
           <Page key={index}>
             <Component height={layout.height} width={layout.width} flex={1} />
             <ItemFooter
-              text={name}
+              title={name}
+              description={description}
               pb={layout.itemFooterBottomPadding}
               height={layout.footerHeight}
             />
