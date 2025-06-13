@@ -2,6 +2,7 @@ import React from "react";
 import Animated, {
   SharedValue,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
 } from "react-native-reanimated";
 import { Button, View, ViewProps } from "tamagui";
@@ -64,10 +65,15 @@ export default React.memo(function DisplaysScrollView({
   fullScreenAmount,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
+  const enableScrollSharedValue = useDerivedValue<boolean>(
+    () => fullScreenAmount.value === 0
+  );
+
   const { ScrollView, Page, scrollXOffset, previous, next } =
     useScrollablePagination({
       pageCount: displays.length,
       pageWidth,
+      enableScrollSharedValue,
     });
 
   const state = useSharedValue<TimerState>({ type: "stopped" });

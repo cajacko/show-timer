@@ -1,6 +1,7 @@
 import React from "react";
 import Animated, {
   AnimatedRef,
+  runOnJS,
   scrollTo,
   SharedValue,
   useAnimatedRef,
@@ -19,6 +20,7 @@ export interface PaginationProps {
   pageWidth: number;
   scrollDuration?: number;
   pageCount: number;
+  enableScrollSharedValue: SharedValue<boolean>;
 }
 
 type InjectedProps = ScrollViewProps & {
@@ -105,30 +107,50 @@ function useControls({
   scrollXOffset,
   scrollDuration,
   scrollXControl,
+  enableScrollSharedValue,
 }: {
   scrollXOffset: SharedValue<number>;
   scrollXControl: SharedValue<number>;
   pageWidth: number;
   pageCount: number;
   scrollDuration: number;
+  enableScrollSharedValue: SharedValue<boolean>;
 }) {
   const previous = React.useCallback(() => {
+    if (!enableScrollSharedValue.value) return;
+
     const currentIndex = Math.round(scrollXOffset.value / pageWidth);
     const nextIndex = currentIndex === 0 ? pageCount - 1 : currentIndex - 1;
 
     scrollXControl.value = withTiming(nextIndex * pageWidth, {
       duration: scrollDuration,
     });
-  }, [pageWidth, scrollXOffset, pageCount, scrollDuration, scrollXControl]);
+  }, [
+    pageWidth,
+    scrollXOffset,
+    pageCount,
+    scrollDuration,
+    scrollXControl,
+    enableScrollSharedValue,
+  ]);
 
   const next = React.useCallback(() => {
+    if (!enableScrollSharedValue.value) return;
+
     const currentIndex = Math.round(scrollXOffset.value / pageWidth);
     const nextIndex = currentIndex >= pageCount - 1 ? 0 : currentIndex + 1;
 
     scrollXControl.value = withTiming(nextIndex * pageWidth, {
       duration: scrollDuration,
     });
-  }, [pageWidth, scrollXOffset, pageCount, scrollDuration, scrollXControl]);
+  }, [
+    pageWidth,
+    scrollXOffset,
+    pageCount,
+    scrollDuration,
+    scrollXControl,
+    enableScrollSharedValue,
+  ]);
 
   return { previous, next };
 }
@@ -137,6 +159,7 @@ export function useControlledPagination({
   pageWidth,
   scrollDuration = 300,
   pageCount,
+  enableScrollSharedValue,
 }: PaginationProps) {
   const scrollXOffset = useSharedValue(0); // only use internally
 
@@ -146,6 +169,7 @@ export function useControlledPagination({
     scrollXOffset,
     scrollXControl: scrollXOffset,
     scrollDuration,
+    enableScrollSharedValue,
   });
 
   const { Page, ControlledScrollView } = React.useMemo(() => {
@@ -171,13 +195,21 @@ export function useScrollablePagination({
   pageWidth,
   scrollDuration = 300,
   pageCount,
+  enableScrollSharedValue,
 }: PaginationProps) {
   const scrollViewRef = useAnimatedRef<Animated.ScrollView>();
   const scrollXControl = useSharedValue(0); // only use internally
   const scrollXOffset = useScrollViewOffset(scrollViewRef);
+  const [scrollEnabled, setScrollEnabled] = React.useState(
+    () => enableScrollSharedValue.value
+  );
 
   useDerivedValue(() => {
     scrollTo(scrollViewRef, scrollXControl.value, 0, true);
+  });
+
+  useDerivedValue(() => {
+    runOnJS(setScrollEnabled)(enableScrollSharedValue.value);
   });
 
   const controls = useControls({
@@ -186,6 +218,7 @@ export function useScrollablePagination({
     scrollXOffset,
     scrollXControl: scrollXControl,
     scrollDuration,
+    enableScrollSharedValue,
   });
 
   const { ScrollView, scrollViewProps, Page } = React.useMemo(() => {

@@ -11,6 +11,7 @@ import Indicators from "@/features/pagination/Indicators";
 import { useControlledPagination } from "@/features/pagination/usePagination";
 import Animated, {
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
 } from "react-native-reanimated";
 
@@ -110,12 +111,17 @@ function useLayout() {
 export default React.memo(function TimersScrollView({
   ...props
 }: TimersScrollViewProps): React.ReactNode {
-  const layout = useLayout();
+  const { fullScreenAmount, ...layout } = useLayout();
+
+  const enableScrollSharedValue = useDerivedValue<boolean>(
+    () => fullScreenAmount.value === 0
+  );
 
   const { ControlledScrollView, previous, next, scrollXOffset, Page } =
     useControlledPagination({
       pageCount: timers.length,
       pageWidth: layout.width,
+      enableScrollSharedValue,
     });
 
   return (
@@ -130,7 +136,7 @@ export default React.memo(function TimersScrollView({
               height={layout.height}
               width={layout.width}
               flex={1}
-              fullScreenAmount={layout.fullScreenAmount}
+              fullScreenAmount={fullScreenAmount}
               title={name}
               description={description}
               footerHeight={layout.footerHeight}
