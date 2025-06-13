@@ -33,12 +33,14 @@ export default React.memo(function StageSelector({
   alertValue,
   ...props
 }: StageSelectorProps): React.ReactNode {
-  const stageCount = React.useMemo(() => {
-    let count = 0;
-    if (okayValue !== undefined) count++;
-    if (warningValue !== undefined) count++;
-    if (alertValue !== undefined) count++;
-    return count;
+  const stages = React.useMemo(() => {
+    const result: { key: Stage; value: string }[] = [];
+    if (okayValue !== undefined) result.push({ key: "okay", value: okayValue });
+    if (warningValue !== undefined)
+      result.push({ key: "warning", value: warningValue });
+    if (alertValue !== undefined)
+      result.push({ key: "alert", value: alertValue });
+    return result;
   }, [okayValue, warningValue, alertValue]);
 
   const actions = React.useMemo(
@@ -56,24 +58,15 @@ export default React.memo(function StageSelector({
   const activeIndicatorPosition = useSharedValue(0);
 
   React.useEffect(() => {
-    let newValue: number;
+    const index = stages.findIndex((stage) => stage.key === active);
+    if (index === -1) return;
 
-    switch (active) {
-      case "okay":
-        newValue = 0;
-        break;
-      case "warning":
-        newValue = 1;
-        break;
-      case "alert":
-        newValue = 2;
-        break;
-      default:
-        return;
-    }
-
-    activeIndicatorPosition.value = withSpring(newValue);
-  }, [active, activeIndicatorPosition]);
+    activeIndicatorPosition.value = withSpring(index, {
+      damping: 10,
+      stiffness: 100,
+      mass: 0.7,
+    });
+  }, [active, activeIndicatorPosition, stages]);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -86,57 +79,41 @@ export default React.memo(function StageSelector({
   });
 
   const activeChildren = (
-    <AnimatedView
-      width="33.33%"
-      items="center"
-      justify="center"
-      mt={activePosition === "bottom" ? spacing : 0}
-      mb={activePosition === "top" ? spacing : 0}
-      style={animatedStyle}
-    >
-      <Circle
-        background="white"
-        style={{ backgroundColor: "white" }}
-        height="$0.75"
-        width="$0.75"
-      />
-    </AnimatedView>
+    <View width="100%" justify="center" items="center">
+      <View width={`${stages.length * 33.33}%`} position="relative">
+        <AnimatedView
+          width={`${100 / stages.length}%`}
+          items="center"
+          justify="center"
+          mt={activePosition === "bottom" ? spacing : 0}
+          mb={activePosition === "top" ? spacing : 0}
+          style={animatedStyle}
+        >
+          <Circle
+            background="white"
+            style={{ backgroundColor: "white" }}
+            height="$0.75"
+            width="$0.75"
+          />
+        </AnimatedView>
+      </View>
+    </View>
   );
 
   return (
     <View width="100%" {...props}>
       {activePosition === "top" && !!active && activeChildren}
-      <View flexDirection="row">
-        {okayValue !== undefined && (
-          <View flex={1} px={spacing}>
+      <View flexDirection="row" justify="center">
+        {stages.map(({ key, value }) => (
+          <View key={key} width="33.33%" px={spacing}>
             <StageButton
-              value={okayValue}
-              borderColor={stageColors.okay}
-              onPress={actions.okay}
+              value={value}
+              borderColor={stageColors[key]}
+              onPress={actions[key]}
               width="100%"
             />
           </View>
-        )}
-        {warningValue !== undefined && (
-          <View flex={1} px={spacing}>
-            <StageButton
-              value={warningValue}
-              borderColor={stageColors.warning}
-              onPress={actions.warning}
-              width="100%"
-            />
-          </View>
-        )}
-        {alertValue !== undefined && (
-          <View flex={1} px={spacing}>
-            <StageButton
-              value={alertValue}
-              borderColor={stageColors.alert}
-              onPress={actions.alert}
-              width="100%"
-            />
-          </View>
-        )}
+        ))}
       </View>
       {activePosition === "bottom" && !!active && activeChildren}
     </View>

@@ -34,7 +34,7 @@ export default React.memo(function BorderTimer({
   stage,
 }: BorderTimerProps): React.ReactNode {
   const theme = useTheme();
-  const backgroundColor = theme[stage]?.val;
+  const backgroundColor = theme[stageColors[stage]]?.val;
 
   const duration = useDerivedValue<number | null>(
     () => (durationProp.value === null ? 0 : durationProp.value),

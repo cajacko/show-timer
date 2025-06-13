@@ -59,6 +59,7 @@ export default React.memo(function TimerScreenLayout({
         active={selectedStage}
         onChange={onChangeSelectedStage}
         activePosition="bottom"
+        my="$space.4"
       />
       <View flex={1} items="center" justify="center">
         <NumberPad borderColor={stageColor} />
