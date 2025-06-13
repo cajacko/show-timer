@@ -2,14 +2,18 @@ import React from "react";
 import TimerScreenLayout, {
   TimerScreenLayoutProps,
 } from "../timer-screen-layout/TimerScreenLayout";
+import { TimerCommonProps } from "./Timer.types";
+import { useSharedValue } from "react-native-reanimated";
 
-export interface DurationTimerProps extends TimerScreenLayoutProps {}
+export type DurationTimerProps = TimerCommonProps;
 
 export default React.memo(function DurationTimer({
   ...props
 }: DurationTimerProps): React.ReactNode {
   const [selectedStage, setSelectedStage] =
     React.useState<TimerScreenLayoutProps["selectedStage"]>("okay");
+
+  const duration = useSharedValue<number | null>(120);
 
   return (
     <TimerScreenLayout
@@ -18,7 +22,8 @@ export default React.memo(function DurationTimer({
       alertValue="0"
       selectedStage={selectedStage}
       onChangeSelectedStage={setSelectedStage}
+      duration={duration}
       {...props}
-    ></TimerScreenLayout>
+    />
   );
 });

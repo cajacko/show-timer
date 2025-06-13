@@ -6,12 +6,15 @@ import StageSelector, {
 import React from "react";
 import { useDerivedValue } from "react-native-reanimated";
 import { View, ViewProps } from "tamagui";
-import DisplaysScrollView from "@/features/displays/DisplaysScrollView";
+import DisplaysScrollView, {
+  DisplaysScrollViewProps,
+} from "@/features/displays/DisplaysScrollView";
 import stageColors from "@/features/stages/stageColors";
 
 export interface TimerScreenLayoutProps
   extends Pick<StageSelectorProps, "okayValue" | "warningValue" | "alertValue">,
-    Omit<ViewProps, "height" | "width"> {
+    Omit<ViewProps, "height" | "width">,
+    Pick<DisplaysScrollViewProps, "duration"> {
   height: number;
   width: number;
   selectedStage?: Stage;
@@ -26,6 +29,7 @@ export default React.memo(function TimerScreenLayout({
   warningValue,
   alertValue,
   onChangeSelectedStage,
+  duration,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const height = useDerivedValue<number>(() => {
@@ -40,7 +44,12 @@ export default React.memo(function TimerScreenLayout({
 
   return (
     <View flexDirection="column" {...props}>
-      <DisplaysScrollView height={height} width={width} pageWidth={widthProp} />
+      <DisplaysScrollView
+        height={height}
+        width={width}
+        pageWidth={widthProp}
+        duration={duration}
+      />
       <StageSelector
         okayValue={okayValue}
         warningValue={warningValue}

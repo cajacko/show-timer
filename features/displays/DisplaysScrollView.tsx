@@ -14,6 +14,7 @@ export interface DisplaysScrollViewProps
   height: SharedValue<number>;
   width: SharedValue<number>;
   pageWidth: number;
+  duration: SharedValue<number | null>;
 }
 
 const displays: {
@@ -47,6 +48,7 @@ export default React.memo(function DisplaysScrollView({
   height,
   width,
   pageWidth,
+  duration,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
   const { ScrollView, Page, scrollXOffset, previous, next } =
@@ -55,7 +57,6 @@ export default React.memo(function DisplaysScrollView({
       pageWidth,
     });
 
-  const duration = useSharedValue<number | null>(60);
   const state = useSharedValue<TimerState>({ type: "stopped" });
 
   return (
