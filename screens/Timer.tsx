@@ -131,6 +131,7 @@ export default React.memo(function TimerScreen(): React.ReactNode {
               addTime={addTime}
               back={back}
               fullScreenAmount={fullScreenAmount}
+              stage="okay"
             />
           </View>
         );

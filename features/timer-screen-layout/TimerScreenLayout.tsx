@@ -14,7 +14,7 @@ import stageColors from "@/features/stages/stageColors";
 export interface TimerScreenLayoutProps
   extends Pick<StageSelectorProps, "okayValue" | "warningValue" | "alertValue">,
     Omit<ViewProps, "height" | "width">,
-    Pick<DisplaysScrollViewProps, "duration"> {
+    Pick<DisplaysScrollViewProps, "duration" | "stage"> {
   height: number;
   width: number;
   selectedStage?: Stage;
@@ -30,6 +30,7 @@ export default React.memo(function TimerScreenLayout({
   alertValue,
   onChangeSelectedStage,
   duration,
+  stage,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const height = useDerivedValue<number>(() => {
@@ -49,6 +50,7 @@ export default React.memo(function TimerScreenLayout({
         width={width}
         pageWidth={widthProp}
         duration={duration}
+        stage={stage}
       />
       <StageSelector
         okayValue={okayValue}

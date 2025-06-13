@@ -17,16 +17,16 @@ const timers: {
   name: string;
   description: string;
 }[] = [
+  {
+    component: ClockTimer,
+    name: "Clock",
+    description: "It's a clock, it shows the time",
+  },
   { component: Timer, name: "Timer", description: "Count up from 0" },
   {
     component: DurationTimer,
     name: "Duration",
     description: "Count down from a set duration",
-  },
-  {
-    component: ClockTimer,
-    name: "Clock",
-    description: "It's a clock, it shows the time",
   },
 ];
 

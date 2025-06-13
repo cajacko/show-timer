@@ -74,6 +74,7 @@ export default React.memo(function ClockTimer({
       duration={duration}
       warningValue="0"
       alertValue="0"
+      stage="okay"
       selectedStage={selectedStage}
       onChangeSelectedStage={setSelectedStage}
       {...props}

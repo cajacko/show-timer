@@ -20,6 +20,7 @@ export default React.memo(function DurationTimer({
       okayValue="0"
       warningValue="0"
       alertValue="0"
+      stage="okay"
       selectedStage={selectedStage}
       onChangeSelectedStage={setSelectedStage}
       duration={duration}

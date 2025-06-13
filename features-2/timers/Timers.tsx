@@ -45,6 +45,7 @@ export default React.memo(function Timers({
         addTime={addTime}
         fullScreenAmount={fullScreenAmount}
         stop={stop}
+        stage="okay"
       />
     </View>
   );

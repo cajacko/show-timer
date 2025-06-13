@@ -1,3 +1,4 @@
+import { Stage } from "@/features/stages/Stage.types";
 import { DerivedValue, SharedValue } from "react-native-reanimated";
 
 export type TimerState =
@@ -24,4 +25,5 @@ export interface TimerProps extends TimerControls {
   close?: () => void;
   colorVariant?: "border" | "background";
   showText?: boolean;
+  stage: Stage;
 }

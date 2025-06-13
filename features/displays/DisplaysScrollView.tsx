@@ -8,6 +8,7 @@ import { useScrollablePagination } from "@/features/pagination/usePagination";
 import { TimerState } from "@/features-2/timers/types";
 import Indicators from "@/features/pagination/Indicators";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
+import { Stage } from "@/features/stages/Stage.types";
 
 export interface DisplaysScrollViewProps
   extends Omit<ViewProps, "height" | "width"> {
@@ -15,6 +16,7 @@ export interface DisplaysScrollViewProps
   width: SharedValue<number>;
   pageWidth: number;
   duration: SharedValue<number | null>;
+  stage: Stage;
 }
 
 const displays: {
@@ -49,6 +51,7 @@ export default React.memo(function DisplaysScrollView({
   width,
   pageWidth,
   duration,
+  stage,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
   const { ScrollView, Page, scrollXOffset, previous, next } =
@@ -65,6 +68,7 @@ export default React.memo(function DisplaysScrollView({
         {displays.map(({ component: Component, props: componentProps }, i) => (
           <Page key={i}>
             <Component
+              stage={stage}
               height={height}
               width={width}
               duration={duration}
