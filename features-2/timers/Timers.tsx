@@ -27,6 +27,7 @@ export default React.memo(function Timers({
   fullScreenAmount,
   stop,
   state,
+  rotate,
   ...viewProps
 }: TimersProps): React.ReactNode {
   return (

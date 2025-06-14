@@ -26,4 +26,5 @@ export interface TimerProps extends TimerControls {
   colorVariant?: "border" | "background";
   showText?: boolean;
   stage: Stage;
+  rotate?: () => void;
 }

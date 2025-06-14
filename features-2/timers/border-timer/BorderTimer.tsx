@@ -1,5 +1,11 @@
 import Countdown from "@/features-2/countdown/Countdown";
-import { ArrowLeft, Pause, Play, TimerReset } from "@tamagui/lucide-icons";
+import {
+  ArrowLeft,
+  Pause,
+  Play,
+  TimerReset,
+  RotateCcw,
+} from "@tamagui/lucide-icons";
 import React from "react";
 import Animated, {
   interpolateColor,
@@ -32,6 +38,7 @@ export default React.memo(function BorderTimer({
   colorVariant = "border",
   showText = true,
   stage,
+  rotate,
 }: BorderTimerProps): React.ReactNode {
   const theme = useTheme();
   const backgroundColor = theme[stageColors[stage]]?.val;
@@ -127,6 +134,12 @@ export default React.memo(function BorderTimer({
             style={actionAnimatedStyle}
           >
             <Button icon={ArrowLeft} circular size="$5" onPress={back} />
+          </AnimatedView>
+        )}
+
+        {rotate && (
+          <AnimatedView position="absolute" t="$space.2" r="$space.2">
+            <Button icon={RotateCcw} circular size="$5" onPress={rotate} />
           </AnimatedView>
         )}
 

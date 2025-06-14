@@ -29,7 +29,13 @@ type InjectedProps = ScrollViewProps & {
 
 function withScrollView(injectedProps: InjectedProps) {
   return React.memo<ScrollViewProps>(function ScrollView(props) {
-    return <Animated.ScrollView {...injectedProps} {...props} />;
+    return (
+      <Animated.ScrollView
+        {...injectedProps}
+        {...props}
+        // style={{ overflow: "visible" }}
+      />
+    );
   });
 }
 
