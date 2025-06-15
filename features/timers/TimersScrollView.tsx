@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import React from "react";
-import { Dimensions, StyleSheet } from "react-native";
+import { Dimensions, Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, ScrollViewProps, View } from "tamagui";
 import ClockTimer from "./ClockTimer";
@@ -18,6 +18,7 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
 } from "react-native-reanimated";
+import { useKeepAwake } from "expo-keep-awake";
 
 export type TimersScrollViewProps = object;
 
@@ -115,6 +116,12 @@ function useLayout() {
 export default React.memo(function TimersScrollView({
   ...props
 }: TimersScrollViewProps): React.ReactNode {
+  // This is okay as we can't switch platforms at runtime
+  if (Platform.OS !== "web") {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useKeepAwake();
+  }
+
   const { fullScreenAmount, ...layout } = useLayout();
 
   const enableScrollSharedValue = useDerivedValue<boolean>(
