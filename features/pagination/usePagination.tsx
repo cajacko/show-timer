@@ -6,7 +6,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from "react-native-reanimated";
-import { ViewProps as RNViewProps } from "react-native";
+import { Platform, ViewProps as RNViewProps } from "react-native";
 import { View, ViewProps } from "tamagui";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 
@@ -189,7 +189,7 @@ export const ScrollView = React.memo(function ScrollView({
         overflow="hidden"
         flexDirection="row"
         justify="center"
-        items="center"
+        items={Platform.select({ web: "flex-start", default: "center" })}
         {...props}
       >
         <View flexDirection="row">
