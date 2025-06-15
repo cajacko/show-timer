@@ -4,7 +4,8 @@ import {
   Pause,
   Play,
   TimerReset,
-  RotateCcw,
+  LockKeyhole,
+  LockKeyholeOpen,
 } from "@tamagui/lucide-icons";
 import React from "react";
 import Animated, {
@@ -18,6 +19,8 @@ import Animated, {
 import { Button, useTheme, View } from "tamagui";
 import { TimerProps } from "../types";
 import stageColors from "@/features/stages/stageColors";
+import { useOrientation } from "@/hooks/useOrientation";
+import { Platform } from "react-native";
 
 export type BorderTimerProps = TimerProps;
 
@@ -38,8 +41,12 @@ export default React.memo(function BorderTimer({
   colorVariant = "border",
   showText = true,
   stage,
-  rotate,
+  lockedOrientation,
+  lockOrientation,
 }: BorderTimerProps): React.ReactNode {
+  const _orientation = useOrientation();
+  const orientation = lockedOrientation ?? _orientation;
+
   const theme = useTheme();
   const backgroundColor = theme[stageColors[stage]]?.val;
 
@@ -97,14 +104,42 @@ export default React.memo(function BorderTimer({
     ],
   }));
 
+  const startRotation = useSharedValue(0);
+
   const startStyle = useAnimatedStyle(() => ({
     opacity: state.value.type === "stopped" ? 1 : 0,
     transform: [
       {
         translateY: state.value.type === "stopped" ? 0 : -99999,
       },
+      {
+        rotate: `${startRotation.value}deg`,
+      },
     ],
   }));
+
+  React.useEffect(() => {
+    if (Platform.OS === "web") return;
+
+    let rotation: number;
+
+    switch (orientation) {
+      case "portrait-up":
+        rotation = 0;
+        break;
+      case "portrait-down":
+        rotation = 180;
+        break;
+      case "landscape-left":
+        rotation = -90;
+        break;
+      case "landscape-right":
+        rotation = 90;
+        break;
+    }
+
+    startRotation.value = withTiming(rotation);
+  }, [startRotation, orientation]);
 
   const resumeStyle = useAnimatedStyle(() => ({
     opacity: state.value.type === "paused" ? 1 : 0,
@@ -114,6 +149,18 @@ export default React.memo(function BorderTimer({
       },
     ],
   }));
+
+  const lockUnlock = React.useMemo(() => {
+    if (!lockOrientation) return undefined;
+
+    return () => {
+      if (lockedOrientation) {
+        lockOrientation(null);
+      } else {
+        lockOrientation(orientation);
+      }
+    };
+  }, [lockedOrientation, lockOrientation, orientation]);
 
   return (
     <Animated.View style={animatedStyle}>
@@ -137,9 +184,14 @@ export default React.memo(function BorderTimer({
           </AnimatedView>
         )}
 
-        {rotate && (
+        {lockUnlock && (
           <AnimatedView position="absolute" t="$space.2" r="$space.2">
-            <Button icon={RotateCcw} circular size="$5" onPress={rotate} />
+            <Button
+              icon={lockedOrientation ? LockKeyhole : LockKeyholeOpen}
+              circular
+              size="$5"
+              onPress={lockUnlock}
+            />
           </AnimatedView>
         )}
 

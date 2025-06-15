@@ -18,6 +18,7 @@ import { TimerState } from "@/features-2/timers/types";
 import Indicators from "@/features/pagination/Indicators";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import { Stage } from "@/features/stages/Stage.types";
+import { Orientation } from "@/hooks/useOrientation";
 
 const displays: {
   component: React.NamedExoticComponent<BorderTimerProps>;
@@ -69,25 +70,8 @@ export default React.memo(function DisplaysScrollView({
 }: DisplaysScrollViewProps): React.ReactNode {
   const _rotation = useSharedValue(0);
 
-  const rotation = useDerivedValue(() => {
-    if (fullScreenAmount.value === 0) return 0;
-
-    return _rotation.value;
-
-    // return _rotation.value * fullScreenAmount.value;
-  });
-
-  const rotate = React.useCallback(async () => {
-    if (_rotation.value === 0) {
-      _rotation.value = 90; // Start rotation at 90 degrees
-    } else if (_rotation.value === 90) {
-      _rotation.value = 180; // Rotate to 180 degrees
-    } else if (_rotation.value === 180) {
-      _rotation.value = 270; // Rotate to 270 degrees
-    } else {
-      _rotation.value = 0; // Reset to 0 degrees
-    }
-  }, [_rotation]);
+  const [lockedOrientation, lockOrientation] =
+    React.useState<Orientation | null>(null);
 
   const enableScrollSharedValue = useDerivedValue<boolean>(
     () => fullScreenAmount.value === 0
@@ -158,8 +142,8 @@ export default React.memo(function DisplaysScrollView({
               duration={duration}
               state={state}
               start={start}
-              rotate={rotate}
-              rotation={rotation}
+              lockOrientation={lockOrientation}
+              lockedOrientation={lockedOrientation}
               {...componentProps}
             />
           </Page>

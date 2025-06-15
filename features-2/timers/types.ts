@@ -1,4 +1,5 @@
 import { Stage } from "@/features/stages/Stage.types";
+import { Orientation } from "@/hooks/useOrientation";
 import { DerivedValue, SharedValue } from "react-native-reanimated";
 
 export type TimerState =
@@ -26,6 +27,6 @@ export interface TimerProps extends TimerControls {
   colorVariant?: "border" | "background";
   showText?: boolean;
   stage: Stage;
-  rotate?: () => void;
-  rotation?: SharedValue<number>;
+  lockedOrientation?: Orientation | null;
+  lockOrientation?: (orientation: Orientation | null) => void;
 }

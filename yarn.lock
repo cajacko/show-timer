@@ -4560,6 +4560,13 @@ expo-router@~5.0.7:
     server-only "^0.0.1"
     shallowequal "^1.1.0"
 
+expo-sensors@~14.1.4:
+  version "14.1.4"
+  resolved "https://registry.yarnpkg.com/expo-sensors/-/expo-sensors-14.1.4.tgz#a2d4d20354650371a37d6f0d334973f68cd44f9c"
+  integrity sha512-KHROi5C8dhXedMwx7fZ5eyv9p382F5XOIex4a+GpdOTL3OY4xyk08kt7x64FtMeeoT87gYD3mb9LrBpHyNubkg==
+  dependencies:
+    invariant "^2.2.4"
+
 expo-splash-screen@~0.30.9:
   version "0.30.9"
   resolved "https://registry.yarnpkg.com/expo-splash-screen/-/expo-splash-screen-0.30.9.tgz#8f2a86b3b802ea46065fc761ed60e77e81bdb84c"
