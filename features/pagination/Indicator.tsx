@@ -11,7 +11,7 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export interface CustomIndicatorProps {
   scrollX: SharedValue<number>;
-  pageWidth: number;
+  pageWidth: number | SharedValue<number>;
   pageIndex: number;
   size?: number;
   outOfViewScale?: number;
@@ -24,13 +24,15 @@ const defaultOutOfViewIndicatorScale = 0.5; // Scale for indicators that 100%
 
 export default React.memo(function Indicator({
   scrollX,
-  pageWidth,
+  pageWidth: pageWidthProp,
   pageIndex,
   size = defaultIndicatorSize,
   outOfViewScale = defaultOutOfViewIndicatorScale,
   ...props
 }: IndicatorProps): React.ReactNode {
   const style = useAnimatedStyle(() => {
+    const pageWidth =
+      typeof pageWidthProp === "number" ? pageWidthProp : pageWidthProp.value;
     const center = pageIndex * pageWidth;
 
     const scale = interpolate(

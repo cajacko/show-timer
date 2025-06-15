@@ -27,4 +27,5 @@ export interface TimerProps extends TimerControls {
   showText?: boolean;
   stage: Stage;
   rotate?: () => void;
+  rotation?: SharedValue<number>;
 }

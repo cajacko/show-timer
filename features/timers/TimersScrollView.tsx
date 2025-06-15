@@ -8,7 +8,7 @@ import DurationTimer from "./DurationTimer";
 import Timer from "./Timer";
 import { TimerCommonProps } from "./Timer.types";
 import Indicators from "@/features/pagination/Indicators";
-import { useControlledPagination } from "@/features/pagination/usePagination";
+import { usePagination } from "@/features/pagination/usePagination";
 import Animated, {
   useAnimatedStyle,
   useDerivedValue,
@@ -117,19 +117,15 @@ export default React.memo(function TimersScrollView({
     () => fullScreenAmount.value === 0
   );
 
-  const { ControlledScrollView, previous, next, scrollXOffset, Page } =
-    useControlledPagination({
-      pageCount: timers.length,
-      pageWidth: layout.width,
-      enableScrollSharedValue,
-    });
+  const { ScrollView, previous, next, scrollXOffset, Page } = usePagination({
+    pageCount: timers.length,
+    pageWidth: layout.width,
+    enableScrollSharedValue,
+  });
 
   return (
     <View flex={1} {...props}>
-      <ControlledScrollView
-        onLayout={layout.onLayout}
-        style={styles.scrollView}
-      >
+      <ScrollView onLayout={layout.onLayout} style={styles.scrollView}>
         {timers.map(({ component: Component, name, description }, index) => (
           <Page key={index}>
             <Component
@@ -144,7 +140,7 @@ export default React.memo(function TimersScrollView({
             />
           </Page>
         ))}
-      </ControlledScrollView>
+      </ScrollView>
       <AnimatedView
         flexDirection="row"
         width="100%"

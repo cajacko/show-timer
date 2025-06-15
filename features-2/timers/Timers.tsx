@@ -28,6 +28,7 @@ export default React.memo(function Timers({
   stop,
   state,
   rotate,
+  rotation,
   ...viewProps
 }: TimersProps): React.ReactNode {
   return (

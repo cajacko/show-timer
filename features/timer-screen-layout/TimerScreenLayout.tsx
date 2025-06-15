@@ -101,7 +101,6 @@ export default React.memo(function TimerScreenLayout({
       <DisplaysScrollView
         height={displayHeight}
         width={width}
-        pageWidth={widthProp}
         duration={duration}
         stage={stage}
         start={start}

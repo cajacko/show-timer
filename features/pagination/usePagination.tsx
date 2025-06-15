@@ -1,50 +1,34 @@
 import React from "react";
 import Animated, {
-  AnimatedRef,
+  clamp,
   runOnJS,
-  scrollTo,
   SharedValue,
-  useAnimatedRef,
   useAnimatedStyle,
-  useDerivedValue,
-  useScrollViewOffset,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { ScrollViewProps, ViewProps as RNViewProps } from "react-native";
+import { ViewProps as RNViewProps } from "react-native";
 import { View, ViewProps } from "tamagui";
+import { GestureDetector, Gesture } from "react-native-gesture-handler";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 export interface PaginationProps {
-  pageWidth: number;
+  pageWidth: number | SharedValue<number>;
   scrollDuration?: number;
   pageCount: number;
   enableScrollSharedValue: SharedValue<boolean>;
 }
 
-type InjectedProps = ScrollViewProps & {
-  ref: AnimatedRef<Animated.ScrollView>;
-};
-
-function withScrollView(injectedProps: InjectedProps) {
-  return React.memo<ScrollViewProps>(function ScrollView(props) {
-    return (
-      <Animated.ScrollView
-        {...injectedProps}
-        {...props}
-        // style={{ overflow: "visible" }}
-      />
-    );
-  });
-}
+const underScrollPercentage = 0.33; // Percentage of the page width to allow under-scrolling
+const fastEnoughVelocity = 2500; // Arbitrary threshold for "fast enough" scrolling
 
 function withControlledScrollView({
   pageWidth,
   scrollXOffset,
   pageCount,
 }: {
-  pageWidth: number;
+  pageWidth: number | SharedValue<number>;
   scrollXOffset: SharedValue<number>;
   pageCount: number;
 }) {
@@ -58,8 +42,19 @@ function withControlledScrollView({
     children,
     ...props
   }: RNViewProps) {
+    const style = useAnimatedStyle(() => {
+      const width = typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+      return {
+        width,
+        minWidth: width,
+        maxWidth: width,
+      };
+    });
+
     const leftSpacerStyle = useAnimatedStyle(() => {
-      const remainingWidth = (pageCount - 1) * pageWidth - scrollXOffset.value;
+      const width = typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+
+      const remainingWidth = (pageCount - 1) * width - scrollXOffset.value;
       return {
         width: remainingWidth,
       };
@@ -71,45 +66,158 @@ function withControlledScrollView({
       };
     });
 
+    const getPageIndex = React.useCallback(() => {
+      const pageWidthValue =
+        typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+
+      return Math.round(scrollXOffset.value / pageWidthValue);
+    }, []);
+
+    const scrollToPageIndex = React.useCallback(
+      (index: number, velocity?: number) => {
+        const pageWidthValue =
+          typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+        const newOffset = index * pageWidthValue;
+
+        const duration = velocity
+          ? Math.abs((newOffset - scrollXOffset.value) / velocity) * 1000
+          : 300; // Default duration if no velocity is provided
+
+        scrollXOffset.value = withTiming(
+          clamp(newOffset, 0, (pageCount - 1) * pageWidthValue),
+          {
+            duration: Math.min(duration, 300), // Ensure a maximum duration
+          }
+        );
+      },
+      []
+    );
+
+    const pageIndexRef = React.useRef<number>(0);
+
+    const updatePageIndex = React.useCallback(() => {
+      pageIndexRef.current = getPageIndex();
+    }, [getPageIndex]);
+
+    const onEndScroll = React.useCallback(
+      (velocityX: number, translationX: number) => {
+        const pageWidthValue =
+          typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+
+        const movementPercentage = Math.abs(translationX) / pageWidthValue;
+
+        const hasMovedEnough = movementPercentage > underScrollPercentage;
+        const isFastEnough = Math.abs(velocityX) > fastEnoughVelocity; // Arbitrary threshold for "fast enough"
+
+        if (!hasMovedEnough && !isFastEnough) {
+          // If the gesture didn't move enough, snap back to the current page
+          scrollToPageIndex(pageIndexRef.current);
+
+          return;
+        }
+
+        const direction: "left" | "right" = translationX < 0 ? "left" : "right";
+
+        if (direction === "left") {
+          if (pageIndexRef.current >= pageCount - 1) {
+            // Snap back to the last page if we're on the last page
+            scrollToPageIndex(pageIndexRef.current);
+            return;
+          }
+
+          // If the gesture was to the left, go to the next page
+          const nextPageIndex = pageIndexRef.current + 1;
+
+          scrollToPageIndex(nextPageIndex, velocityX);
+        } else {
+          if (pageIndexRef.current === 0) {
+            // Snap back to the first page if we're on the first page
+            scrollToPageIndex(pageIndexRef.current);
+            return;
+          }
+
+          // If the gesture was to the right, go to the previous page
+          const previousPageIndex = pageIndexRef.current - 1;
+
+          scrollToPageIndex(previousPageIndex, velocityX);
+        }
+      },
+      [scrollToPageIndex]
+    );
+
+    const gesture = React.useMemo(() => {
+      return Gesture.Pan()
+        .onStart(() => {
+          runOnJS(updatePageIndex)();
+        })
+        .onChange((event) => {
+          const pw =
+            typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+          const min = 0;
+          const max = (pageCount - 1) * pw;
+          const nextOffset = scrollXOffset.value - event.changeX;
+
+          if (nextOffset < min) {
+            // Overscrolling to the left
+            const overscroll = Math.abs(nextOffset - min);
+            const maxOverscroll = pw * underScrollPercentage;
+            const resistance = 1 - Math.min(overscroll / maxOverscroll, 1); // 1 → 0
+            scrollXOffset.value -= event.changeX * resistance;
+          } else if (nextOffset > max) {
+            // Overscrolling to the right
+            const overscroll = Math.abs(nextOffset - max);
+            const maxOverscroll = pw * underScrollPercentage;
+            const resistance = 1 - Math.min(overscroll / maxOverscroll, 1); // 1 → 0
+            scrollXOffset.value -= event.changeX * resistance;
+          } else {
+            // Normal scrolling
+            scrollXOffset.value = nextOffset;
+          }
+        })
+        .onEnd((event) => {
+          runOnJS(onEndScroll)(event.velocityX, event.translationX);
+        });
+    }, [updatePageIndex, onEndScroll]);
+
     return (
-      <View
-        width={pageWidth}
-        minW={pageWidth}
-        maxW={pageWidth}
-        overflow="hidden"
-        flexDirection="row"
-        justify="center"
-        items="center"
-        {...props}
-      >
-        <View flexDirection="row">
-          <AnimatedView style={leftSpacerStyle} height="100%" />
-          {children}
-          <AnimatedView style={rightSpacerStyle} height="100%" />
-        </View>
-      </View>
+      <GestureDetector gesture={gesture}>
+        <AnimatedView
+          style={style}
+          overflow="hidden"
+          flexDirection="row"
+          justify="center"
+          items="center"
+          {...props}
+        >
+          <View flexDirection="row">
+            <AnimatedView style={leftSpacerStyle} height="100%" />
+            {children}
+            <AnimatedView style={rightSpacerStyle} height="100%" />
+          </View>
+        </AnimatedView>
+      </GestureDetector>
     );
   });
 }
 
-function withPage(pageWidth: number) {
+function withPage(pageWidth: number | SharedValue<number>) {
   return React.memo(function Page(props: ViewProps) {
-    return (
-      <View
-        width={pageWidth}
-        minW={pageWidth}
-        maxW={pageWidth}
-        height="100%"
-        flex={1}
-        {...props}
-      />
-    );
+    const style = useAnimatedStyle(() => {
+      const width = typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+      return {
+        width,
+        minWidth: width,
+        maxWidth: width,
+      };
+    });
+
+    return <AnimatedView style={style} height="100%" flex={1} {...props} />;
   });
 }
 
 function useControls({
   pageCount,
-  pageWidth,
+  pageWidth: pageWidthProp,
   scrollXOffset,
   scrollDuration,
   scrollXControl,
@@ -117,13 +225,21 @@ function useControls({
 }: {
   scrollXOffset: SharedValue<number>;
   scrollXControl: SharedValue<number>;
-  pageWidth: number;
+  pageWidth: number | SharedValue<number>;
   pageCount: number;
   scrollDuration: number;
   enableScrollSharedValue: SharedValue<boolean>;
 }) {
+  const getPageWidth = React.useCallback(() => {
+    return typeof pageWidthProp === "number"
+      ? pageWidthProp
+      : pageWidthProp.value;
+  }, [pageWidthProp]);
+
   const previous = React.useCallback(() => {
     if (!enableScrollSharedValue.value) return;
+
+    const pageWidth = getPageWidth();
 
     const currentIndex = Math.round(scrollXOffset.value / pageWidth);
     const nextIndex = currentIndex === 0 ? pageCount - 1 : currentIndex - 1;
@@ -132,7 +248,7 @@ function useControls({
       duration: scrollDuration,
     });
   }, [
-    pageWidth,
+    getPageWidth,
     scrollXOffset,
     pageCount,
     scrollDuration,
@@ -143,6 +259,8 @@ function useControls({
   const next = React.useCallback(() => {
     if (!enableScrollSharedValue.value) return;
 
+    const pageWidth = getPageWidth();
+
     const currentIndex = Math.round(scrollXOffset.value / pageWidth);
     const nextIndex = currentIndex >= pageCount - 1 ? 0 : currentIndex + 1;
 
@@ -150,7 +268,7 @@ function useControls({
       duration: scrollDuration,
     });
   }, [
-    pageWidth,
+    getPageWidth,
     scrollXOffset,
     pageCount,
     scrollDuration,
@@ -161,7 +279,7 @@ function useControls({
   return { previous, next };
 }
 
-export function useControlledPagination({
+export function usePagination({
   pageWidth,
   scrollDuration = 300,
   pageCount,
@@ -178,10 +296,10 @@ export function useControlledPagination({
     enableScrollSharedValue,
   });
 
-  const { Page, ControlledScrollView } = React.useMemo(() => {
+  const { Page, ScrollView } = React.useMemo(() => {
     return {
       Page: withPage(pageWidth),
-      ControlledScrollView: withControlledScrollView({
+      ScrollView: withControlledScrollView({
         pageWidth,
         scrollXOffset: scrollXOffset,
         pageCount,
@@ -193,64 +311,6 @@ export function useControlledPagination({
     ...controls,
     scrollXOffset,
     Page,
-    ControlledScrollView,
-  };
-}
-
-export function useScrollablePagination({
-  pageWidth,
-  scrollDuration = 300,
-  pageCount,
-  enableScrollSharedValue,
-}: PaginationProps) {
-  const scrollViewRef = useAnimatedRef<Animated.ScrollView>();
-  const scrollXControl = useSharedValue(0); // only use internally
-  const scrollXOffset = useScrollViewOffset(scrollViewRef);
-  const [scrollEnabled, setScrollEnabled] = React.useState(
-    () => enableScrollSharedValue.value
-  );
-
-  useDerivedValue(() => {
-    scrollTo(scrollViewRef, scrollXControl.value, 0, true);
-  });
-
-  useDerivedValue(() => {
-    runOnJS(setScrollEnabled)(enableScrollSharedValue.value);
-  });
-
-  const controls = useControls({
-    pageCount,
-    pageWidth,
-    scrollXOffset,
-    scrollXControl: scrollXControl,
-    scrollDuration,
-    enableScrollSharedValue,
-  });
-
-  const { ScrollView, scrollViewProps, Page } = React.useMemo(() => {
-    const scrollViewProps: InjectedProps = {
-      horizontal: true,
-      snapToInterval: pageWidth,
-      pagingEnabled: true,
-      decelerationRate: "fast",
-      snapToAlignment: "start",
-      showsHorizontalScrollIndicator: false,
-      disableIntervalMomentum: true,
-      ref: scrollViewRef,
-    };
-
-    return {
-      Page: withPage(pageWidth),
-      ScrollView: withScrollView(scrollViewProps),
-      scrollViewProps,
-    };
-  }, [pageWidth, scrollViewRef]);
-
-  return {
-    ...controls,
-    scrollXOffset,
-    scrollViewProps,
     ScrollView,
-    Page,
   };
 }
