@@ -8,7 +8,11 @@ import DurationTimer from "./DurationTimer";
 import Timer from "./Timer";
 import { TimerCommonProps } from "./Timer.types";
 import Indicators from "@/features/pagination/Indicators";
-import { usePagination } from "@/features/pagination/usePagination";
+import {
+  Page,
+  ScrollView,
+  usePaginationControls,
+} from "@/features/pagination/usePagination";
 import Animated, {
   useAnimatedStyle,
   useDerivedValue,
@@ -117,17 +121,31 @@ export default React.memo(function TimersScrollView({
     () => fullScreenAmount.value === 0
   );
 
-  const { ScrollView, previous, next, scrollXOffset, Page } = usePagination({
-    pageCount: timers.length,
-    pageWidth: layout.width,
+  const pageCount = timers.length;
+  const pageWidth = layout.width;
+
+  const scrollXOffset = useSharedValue(0); // only use internally
+
+  const { next, previous } = usePaginationControls({
+    pageCount,
+    pageWidth,
+    scrollXOffset,
+    scrollXControl: scrollXOffset,
     enableScrollSharedValue,
   });
 
   return (
     <View flex={1} {...props}>
-      <ScrollView onLayout={layout.onLayout} style={styles.scrollView}>
+      <ScrollView
+        onLayout={layout.onLayout}
+        style={styles.scrollView}
+        pageCount={pageCount}
+        pageWidth={pageWidth}
+        scrollXOffset={scrollXOffset}
+        enableScrollSharedValue={enableScrollSharedValue}
+      >
         {timers.map(({ component: Component, name, description }, index) => (
-          <Page key={index}>
+          <Page key={index} pageWidth={pageWidth}>
             <Component
               height={layout.height}
               width={layout.width}

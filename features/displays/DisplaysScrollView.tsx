@@ -9,7 +9,11 @@ import { Button, View, ViewProps } from "tamagui";
 import Timer, {
   BorderTimerProps,
 } from "@/features-2/timers/border-timer/BorderTimer";
-import { usePagination } from "@/features/pagination/usePagination";
+import {
+  Page,
+  ScrollView,
+  usePaginationControls,
+} from "@/features/pagination/usePagination";
 import { TimerState } from "@/features-2/timers/types";
 import Indicators from "@/features/pagination/Indicators";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
@@ -124,17 +128,29 @@ export default React.memo(function DisplaysScrollView({
     };
   });
 
-  const { ScrollView, Page, scrollXOffset, previous, next } = usePagination({
-    pageCount: displays.length,
-    pageWidth: width,
+  const pageCount = displays.length;
+  const pageWidth = width;
+
+  const scrollXOffset = useSharedValue(0); // only use internally
+
+  const { next, previous } = usePaginationControls({
+    pageCount,
+    pageWidth,
+    scrollXOffset,
+    scrollXControl: scrollXOffset,
     enableScrollSharedValue,
   });
 
   return (
     <View {...props} overflow="hidden">
-      <ScrollView>
+      <ScrollView
+        pageCount={pageCount}
+        pageWidth={pageWidth}
+        scrollXOffset={scrollXOffset}
+        enableScrollSharedValue={enableScrollSharedValue}
+      >
         {displays.map(({ component: Component, props: componentProps }, i) => (
-          <Page key={i}>
+          <Page key={i} pageWidth={pageWidth}>
             <Component
               stage={stage}
               height={height}
