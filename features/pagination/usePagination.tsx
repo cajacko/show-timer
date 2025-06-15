@@ -4,6 +4,7 @@ import Animated, {
   runOnJS,
   SharedValue,
   useAnimatedStyle,
+  useDerivedValue,
   withTiming,
 } from "react-native-reanimated";
 import { Platform, ViewProps as RNViewProps } from "react-native";
@@ -15,11 +16,14 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 const underScrollPercentage = 0.33; // Percentage of the page width to allow under-scrolling
 const fastEnoughVelocity = 2500; // Arbitrary threshold for "fast enough" scrolling
 
+export type ScrollState = "animating" | "scrolling" | "idle";
+
 export interface ScrollViewProps extends RNViewProps {
   pageWidth: SharedValue<number>;
   scrollXOffset: SharedValue<number>;
   pageCount: number;
   enableScrollSharedValue: SharedValue<boolean>;
+  scrollState: SharedValue<ScrollState>;
 }
 
 export const ScrollView = React.memo(function ScrollView({
@@ -29,6 +33,7 @@ export const ScrollView = React.memo(function ScrollView({
   pageCount,
   style: styleProp,
   enableScrollSharedValue,
+  scrollState,
   ...props
 }: ScrollViewProps) {
   const animatedStyle = useAnimatedStyle(() => {
@@ -38,6 +43,21 @@ export const ScrollView = React.memo(function ScrollView({
       minWidth: width,
       maxWidth: width,
     };
+  });
+
+  useDerivedValue(() => {
+    if (scrollState.value !== "idle") return;
+
+    const nearestPageIndex = Math.round(
+      scrollXOffset.value /
+        (typeof pageWidth === "number" ? pageWidth : pageWidth.value)
+    );
+
+    const nearestPageScrollXOffset =
+      nearestPageIndex *
+      (typeof pageWidth === "number" ? pageWidth : pageWidth.value);
+
+    scrollXOffset.value = nearestPageScrollXOffset;
   });
 
   const style = React.useMemo(() => {
@@ -76,14 +96,19 @@ export const ScrollView = React.memo(function ScrollView({
         ? Math.abs((newOffset - scrollXOffset.value) / velocity) * 1000
         : 300; // Default duration if no velocity is provided
 
+      scrollState.value = "animating";
+
       scrollXOffset.value = withTiming(
         clamp(newOffset, 0, (pageCount - 1) * pageWidthValue),
         {
           duration: Math.min(duration, 300), // Ensure a maximum duration
+        },
+        () => {
+          scrollState.value = "idle";
         }
       );
     },
-    []
+    [pageCount, pageWidth, scrollXOffset, scrollState]
   );
 
   const pageIndexRef = React.useRef<number>(0);
@@ -142,6 +167,7 @@ export const ScrollView = React.memo(function ScrollView({
     return Gesture.Pan()
       .onStart(() => {
         runOnJS(updatePageIndex)();
+        scrollState.value = "scrolling";
       })
       .onChange((event) => {
         if (enableScrollSharedValue.value === false) return;
@@ -169,11 +195,14 @@ export const ScrollView = React.memo(function ScrollView({
         }
       })
       .onEnd((event) => {
+        scrollState.value = "scrolling";
+
         if (enableScrollSharedValue.value === false) return;
 
         runOnJS(onEndScroll)(event.velocityX, event.translationX);
       });
   }, [
+    scrollState,
     updatePageIndex,
     onEndScroll,
     scrollXOffset,
@@ -229,6 +258,7 @@ export interface UsePaginationControlsProps {
   pageCount: number;
   scrollDuration?: number;
   enableScrollSharedValue: SharedValue<boolean>;
+  scrollState: SharedValue<ScrollState>;
 }
 
 export function usePaginationControls({
@@ -238,16 +268,25 @@ export function usePaginationControls({
   scrollDuration = 300,
   scrollXControl,
   enableScrollSharedValue,
+  scrollState,
 }: UsePaginationControlsProps) {
   const previous = React.useCallback(() => {
     if (!enableScrollSharedValue.value) return;
 
+    scrollState.value = "animating";
+
     const currentIndex = Math.round(scrollXOffset.value / pageWidth.value);
     const nextIndex = currentIndex === 0 ? pageCount - 1 : currentIndex - 1;
 
-    scrollXControl.value = withTiming(nextIndex * pageWidth.value, {
-      duration: scrollDuration,
-    });
+    scrollXControl.value = withTiming(
+      nextIndex * pageWidth.value,
+      {
+        duration: scrollDuration,
+      },
+      () => {
+        scrollState.value = "idle";
+      }
+    );
   }, [
     pageWidth,
     scrollXOffset,
@@ -255,18 +294,28 @@ export function usePaginationControls({
     scrollDuration,
     scrollXControl,
     enableScrollSharedValue,
+    scrollState,
   ]);
 
   const next = React.useCallback(() => {
     if (!enableScrollSharedValue.value) return;
 
+    scrollState.value = "animating";
+
     const currentIndex = Math.round(scrollXOffset.value / pageWidth.value);
     const nextIndex = currentIndex >= pageCount - 1 ? 0 : currentIndex + 1;
 
-    scrollXControl.value = withTiming(nextIndex * pageWidth.value, {
-      duration: scrollDuration,
-    });
+    scrollXControl.value = withTiming(
+      nextIndex * pageWidth.value,
+      {
+        duration: scrollDuration,
+      },
+      () => {
+        scrollState.value = "idle";
+      }
+    );
   }, [
+    scrollState,
     pageWidth,
     scrollXOffset,
     pageCount,

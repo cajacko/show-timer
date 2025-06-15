@@ -10,6 +10,7 @@ import { TimerCommonProps } from "./Timer.types";
 import Indicators from "@/features/pagination/Indicators";
 import {
   Page,
+  ScrollState,
   ScrollView,
   usePaginationControls,
 } from "@/features/pagination/usePagination";
@@ -107,7 +108,8 @@ export default React.memo(function TimersScrollView({
   const pageCount = timers.length;
   const pageWidth = layout.width;
 
-  const scrollXOffset = useSharedValue(0); // only use internally
+  const scrollXOffset = useSharedValue(0);
+  const scrollState = useSharedValue<ScrollState>("idle");
 
   const { next, previous } = usePaginationControls({
     pageCount,
@@ -115,11 +117,13 @@ export default React.memo(function TimersScrollView({
     scrollXOffset,
     scrollXControl: scrollXOffset,
     enableScrollSharedValue,
+    scrollState,
   });
 
   return (
     <View flex={1} onLayout={layout.onLayout} {...props}>
       <ScrollView
+        scrollState={scrollState}
         style={styles.scrollView}
         pageCount={pageCount}
         pageWidth={pageWidth}

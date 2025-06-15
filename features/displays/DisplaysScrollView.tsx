@@ -11,6 +11,7 @@ import Timer, {
 } from "@/features-2/timers/border-timer/BorderTimer";
 import {
   Page,
+  ScrollState,
   ScrollView,
   usePaginationControls,
 } from "@/features/pagination/usePagination";
@@ -115,9 +116,11 @@ export default React.memo(function DisplaysScrollView({
   const pageCount = displays.length;
   const pageWidth = width;
 
-  const scrollXOffset = useSharedValue(0); // only use internally
+  const scrollXOffset = useSharedValue(0);
+  const scrollState = useSharedValue<ScrollState>("idle");
 
   const { next, previous } = usePaginationControls({
+    scrollState,
     pageCount,
     pageWidth,
     scrollXOffset,
@@ -128,6 +131,7 @@ export default React.memo(function DisplaysScrollView({
   return (
     <View {...props} overflow="hidden">
       <ScrollView
+        scrollState={scrollState}
         pageCount={pageCount}
         pageWidth={pageWidth}
         scrollXOffset={scrollXOffset}
