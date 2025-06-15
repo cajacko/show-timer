@@ -22,8 +22,8 @@ export interface TimerScreenLayoutProps
   extends Pick<StageSelectorProps, "okayValue" | "warningValue" | "alertValue">,
     Omit<ViewProps, "height" | "width">,
     Pick<DisplaysScrollViewProps, "duration" | "stage"> {
-  height: number;
-  width: number;
+  height: SharedValue<number>;
+  width: SharedValue<number>;
   selectedStage?: Stage;
   onChangeSelectedStage?: StageSelectorProps["onChange"];
   onNumberPadAction?: NumberPadProps["onAction"];
@@ -40,7 +40,7 @@ export interface TimerScreenLayoutProps
 
 export default React.memo(function TimerScreenLayout({
   height,
-  width: widthProp,
+  width,
   selectedStage,
   okayValue,
   warningValue,
@@ -58,7 +58,7 @@ export default React.memo(function TimerScreenLayout({
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
-    return height / 3;
+    return height.value / 3;
   });
 
   /**
@@ -68,20 +68,16 @@ export default React.memo(function TimerScreenLayout({
   const displayHeight = useDerivedValue<number>(() => {
     return clamp(
       collapsedDisplayHeight.value +
-        (height - collapsedDisplayHeight.value) * fullScreenAmount.value,
+        (height.value - collapsedDisplayHeight.value) * fullScreenAmount.value,
       collapsedDisplayHeight.value,
-      height
+      height.value
     );
   });
 
   const contentStyle = useAnimatedStyle(() => {
     return {
-      height: height - collapsedDisplayHeight.value,
+      height: height.value - collapsedDisplayHeight.value,
     };
-  });
-
-  const width = useDerivedValue<number>(() => {
-    return widthProp;
   });
 
   const stageColor = selectedStage ? stageColors[selectedStage] : undefined;

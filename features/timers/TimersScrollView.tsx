@@ -40,7 +40,6 @@ const timers: {
   },
 ];
 
-const intervalDebounce = 100; // 100ms debounce, tweak to taste
 const footerContentHeight = 100;
 const indicatorSize = 15;
 const indicatorContainerHeight = indicatorSize + 10;
@@ -50,43 +49,19 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 function useLayout() {
   const fullScreenAmount = useSharedValue(0);
   const insets = useSafeAreaInsets();
-  const [size, setSize] = React.useState({
-    height: Dimensions.get("window").height,
-    width: Dimensions.get("window").width,
-  });
+  const width = useSharedValue(Dimensions.get("window").width);
+  const height = useSharedValue(Dimensions.get("window").height);
 
   const footerHeight = footerContentHeight + insets.bottom;
-
-  const sizeRef = React.useRef(size);
-  const resizeTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
 
   const onLayout = React.useCallback<NonNullable<ScrollViewProps["onLayout"]>>(
     (event) => {
       const { height: newHeight, width: newWidth } = event.nativeEvent.layout;
 
-      sizeRef.current = {
-        height: newHeight,
-        width: newWidth,
-      };
-
-      /**
-       * Updates with the latest values which are always the reanimated values
-       */
-      function update() {
-        setSize(sizeRef.current);
-
-        resizeTimeout.current = null;
-      }
-
-      if (!resizeTimeout.current) {
-        update();
-
-        resizeTimeout.current = setTimeout(update, intervalDebounce);
-      }
+      height.value = newHeight;
+      width.value = newWidth;
     },
-    []
+    [height, width]
   );
 
   const itemFooterBottomPadding = insets.bottom;
@@ -103,7 +78,8 @@ function useLayout() {
   });
 
   return {
-    ...size,
+    height,
+    width,
     footerStyle,
     insets,
     footerHeight,
@@ -142,9 +118,8 @@ export default React.memo(function TimersScrollView({
   });
 
   return (
-    <View flex={1} {...props}>
+    <View flex={1} onLayout={layout.onLayout} {...props}>
       <ScrollView
-        onLayout={layout.onLayout}
         style={styles.scrollView}
         pageCount={pageCount}
         pageWidth={pageWidth}
