@@ -10,12 +10,14 @@ import Animated, {
   clamp,
   withTiming,
   SharedValue,
+  useSharedValue,
 } from "react-native-reanimated";
-import { SizableText, View, ViewProps } from "tamagui";
+import { Button, SizableText, View, ViewProps } from "tamagui";
 import DisplaysScrollView, {
   DisplaysScrollViewProps,
 } from "@/features/displays/DisplaysScrollView";
 import stageColors from "@/features/stages/stageColors";
+import { ChevronLeft, Play } from "@tamagui/lucide-icons";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 export interface TimerScreenLayoutProps
@@ -28,6 +30,7 @@ export interface TimerScreenLayoutProps
   onChangeSelectedStage?: StageSelectorProps["onChange"];
   onNumberPadAction?: NumberPadProps["onAction"];
   stageButtonVariant?: StageSelectorProps["variant"];
+  onPressDisplay?: DisplaysScrollViewProps["onPress"];
   /**
    * 0 means the display will show at the collapsed height, 1 will show at the full height
    */
@@ -37,6 +40,8 @@ export interface TimerScreenLayoutProps
   footerHeight: number;
   footerPb?: number;
 }
+
+export const fullScreenDuration = 300;
 
 export default React.memo(function TimerScreenLayout({
   height,
@@ -55,6 +60,7 @@ export default React.memo(function TimerScreenLayout({
   description,
   footerHeight,
   footerPb,
+  onPressDisplay,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
@@ -85,23 +91,66 @@ export default React.memo(function TimerScreenLayout({
   const fullScreen = React.useRef<boolean>(false);
 
   const start = React.useCallback(() => {
-    fullScreen.current = !fullScreen.current;
+    fullScreen.current = true;
 
-    fullScreenAmount.value = withTiming(fullScreen.current ? 1 : 0, {
-      duration: 300,
+    fullScreenAmount.value = withTiming(1, {
+      duration: fullScreenDuration,
     });
   }, [fullScreenAmount]);
 
+  const goBack = React.useCallback(() => {
+    fullScreen.current = false;
+
+    fullScreenAmount.value = withTiming(0, {
+      duration: fullScreenDuration,
+    });
+  }, [fullScreenAmount]);
+
+  const startStyle = useAnimatedStyle(() => {
+    return {
+      opacity: 1 - fullScreenAmount.value,
+      transform: [
+        {
+          translateY: `${fullScreenAmount.value * 100}%`,
+        },
+      ],
+    };
+  });
+
   return (
     <View flexDirection="column" overflow="hidden" {...props}>
-      <DisplaysScrollView
-        height={displayHeight}
-        width={width}
-        duration={duration}
-        stage={stage}
-        start={start}
-        fullScreenAmount={fullScreenAmount}
-      />
+      <View position="relative">
+        <DisplaysScrollView
+          height={displayHeight}
+          width={width}
+          duration={duration}
+          stage={stage}
+          fullScreenAmount={fullScreenAmount}
+          goBack={goBack}
+          z={1}
+          onPress={onPressDisplay}
+        />
+        <AnimatedView
+          position="absolute"
+          r={0}
+          z={2}
+          b={0}
+          l={0}
+          t={0}
+          pointerEvents="box-none"
+          items="center"
+          justify="flex-end"
+          style={startStyle}
+        >
+          <Button
+            icon={Play}
+            size="$5"
+            onPress={start}
+            circular
+            mb="$space.6"
+          />
+        </AnimatedView>
+      </View>
       <AnimatedView style={contentStyle} justify="space-between">
         <StageSelector
           okayValue={okayValue}

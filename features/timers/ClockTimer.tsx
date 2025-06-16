@@ -1,6 +1,7 @@
 import React from "react";
 import TimerScreenLayout, {
   TimerScreenLayoutProps,
+  fullScreenDuration,
 } from "../timer-screen-layout/TimerScreenLayout";
 import { TimerCommonProps } from "./Timer.types";
 import {
@@ -64,6 +65,7 @@ export function useClockDuration(
 }
 
 export default React.memo(function ClockTimer({
+  fullScreenAmount,
   ...props
 }: ClockTimerProps): React.ReactNode {
   const [selectedStage, setSelectedStage] =
@@ -85,6 +87,24 @@ export default React.memo(function ClockTimer({
     [setActiveValue]
   );
 
+  const onPressDisplay = React.useCallback<
+    NonNullable<TimerScreenLayoutProps["onPressDisplay"]>
+  >(() => {
+    if (fullScreenAmount.value === 0) {
+      fullScreenAmount.value = withTiming(1, {
+        duration: fullScreenDuration,
+      });
+
+      return {
+        handled: true,
+      };
+    }
+
+    return {
+      handled: false,
+    };
+  }, []);
+
   return (
     <TimerScreenLayout
       duration={duration}
@@ -95,6 +115,8 @@ export default React.memo(function ClockTimer({
       onChangeSelectedStage={setSelectedStage}
       onNumberPadAction={onNumberPadAction}
       stageButtonVariant="clock"
+      onPressDisplay={onPressDisplay}
+      fullScreenAmount={fullScreenAmount}
       {...props}
     />
   );

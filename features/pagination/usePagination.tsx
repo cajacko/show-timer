@@ -26,6 +26,15 @@ export interface ScrollViewProps extends RNViewProps {
   scrollState: SharedValue<ScrollState>;
 }
 
+export function useGetPageIndex(
+  scrollXOffset: SharedValue<number>,
+  pageWidth: SharedValue<number>
+): () => number {
+  return React.useCallback(() => {
+    return Math.round(scrollXOffset.value / pageWidth.value);
+  }, [scrollXOffset, pageWidth]);
+}
+
 export const ScrollView = React.memo(function ScrollView({
   children,
   pageWidth,
@@ -37,7 +46,7 @@ export const ScrollView = React.memo(function ScrollView({
   ...props
 }: ScrollViewProps) {
   const animatedStyle = useAnimatedStyle(() => {
-    const width = typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+    const width = pageWidth.value;
     return {
       width,
       minWidth: width,
@@ -48,14 +57,9 @@ export const ScrollView = React.memo(function ScrollView({
   useDerivedValue(() => {
     if (scrollState.value !== "idle") return;
 
-    const nearestPageIndex = Math.round(
-      scrollXOffset.value /
-        (typeof pageWidth === "number" ? pageWidth : pageWidth.value)
-    );
+    const nearestPageIndex = Math.round(scrollXOffset.value / pageWidth.value);
 
-    const nearestPageScrollXOffset =
-      nearestPageIndex *
-      (typeof pageWidth === "number" ? pageWidth : pageWidth.value);
+    const nearestPageScrollXOffset = nearestPageIndex * pageWidth.value;
 
     scrollXOffset.value = nearestPageScrollXOffset;
   });
@@ -65,7 +69,7 @@ export const ScrollView = React.memo(function ScrollView({
   }, [animatedStyle, styleProp]);
 
   const leftSpacerStyle = useAnimatedStyle(() => {
-    const width = typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+    const width = pageWidth.value;
 
     const remainingWidth = (pageCount - 1) * width - scrollXOffset.value;
     return {
@@ -79,18 +83,11 @@ export const ScrollView = React.memo(function ScrollView({
     };
   });
 
-  const getPageIndex = React.useCallback(() => {
-    const pageWidthValue =
-      typeof pageWidth === "number" ? pageWidth : pageWidth.value;
-
-    return Math.round(scrollXOffset.value / pageWidthValue);
-  }, [scrollXOffset, pageWidth]);
+  const getPageIndex = useGetPageIndex(scrollXOffset, pageWidth);
 
   const scrollToPageIndex = React.useCallback(
     (index: number, velocity?: number) => {
-      const pageWidthValue =
-        typeof pageWidth === "number" ? pageWidth : pageWidth.value;
-      const newOffset = index * pageWidthValue;
+      const newOffset = index * pageWidth.value;
 
       const duration = velocity
         ? Math.abs((newOffset - scrollXOffset.value) / velocity) * 1000
@@ -99,7 +96,7 @@ export const ScrollView = React.memo(function ScrollView({
       scrollState.value = "animating";
 
       scrollXOffset.value = withTiming(
-        clamp(newOffset, 0, (pageCount - 1) * pageWidthValue),
+        clamp(newOffset, 0, (pageCount - 1) * pageWidth.value),
         {
           duration: Math.min(duration, 300), // Ensure a maximum duration
         },
@@ -119,10 +116,7 @@ export const ScrollView = React.memo(function ScrollView({
 
   const onEndScroll = React.useCallback(
     (velocityX: number, translationX: number) => {
-      const pageWidthValue =
-        typeof pageWidth === "number" ? pageWidth : pageWidth.value;
-
-      const movementPercentage = Math.abs(translationX) / pageWidthValue;
+      const movementPercentage = Math.abs(translationX) / pageWidth.value;
 
       const hasMovedEnough = movementPercentage > underScrollPercentage;
       const isFastEnough = Math.abs(velocityX) > fastEnoughVelocity; // Arbitrary threshold for "fast enough"
@@ -172,7 +166,7 @@ export const ScrollView = React.memo(function ScrollView({
       .onChange((event) => {
         if (enableScrollSharedValue.value === false) return;
 
-        const pw = typeof pageWidth === "number" ? pageWidth : pageWidth.value;
+        const pw = pageWidth.value;
         const min = 0;
         const max = (pageCount - 1) * pw;
         const nextOffset = scrollXOffset.value - event.changeX;
@@ -270,12 +264,14 @@ export function usePaginationControls({
   enableScrollSharedValue,
   scrollState,
 }: UsePaginationControlsProps) {
+  const getPageIndex = useGetPageIndex(scrollXOffset, pageWidth);
+
   const previous = React.useCallback(() => {
     if (!enableScrollSharedValue.value) return;
 
     scrollState.value = "animating";
 
-    const currentIndex = Math.round(scrollXOffset.value / pageWidth.value);
+    const currentIndex = getPageIndex();
     const nextIndex = currentIndex === 0 ? pageCount - 1 : currentIndex - 1;
 
     scrollXControl.value = withTiming(
@@ -289,12 +285,12 @@ export function usePaginationControls({
     );
   }, [
     pageWidth,
-    scrollXOffset,
     pageCount,
     scrollDuration,
     scrollXControl,
     enableScrollSharedValue,
     scrollState,
+    getPageIndex,
   ]);
 
   const next = React.useCallback(() => {
@@ -302,7 +298,7 @@ export function usePaginationControls({
 
     scrollState.value = "animating";
 
-    const currentIndex = Math.round(scrollXOffset.value / pageWidth.value);
+    const currentIndex = getPageIndex();
     const nextIndex = currentIndex >= pageCount - 1 ? 0 : currentIndex + 1;
 
     scrollXControl.value = withTiming(
@@ -317,11 +313,11 @@ export function usePaginationControls({
   }, [
     scrollState,
     pageWidth,
-    scrollXOffset,
     pageCount,
     scrollDuration,
     scrollXControl,
     enableScrollSharedValue,
+    getPageIndex,
   ]);
 
   return { previous, next };

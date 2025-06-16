@@ -29,4 +29,5 @@ export interface TimerProps extends TimerControls {
   stage: Stage;
   lockedOrientation?: Orientation | null;
   lockOrientation?: (orientation: Orientation | null) => void;
+  onPress?: () => void;
 }

@@ -6,9 +6,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { Button, View, ViewProps } from "tamagui";
-import Timer, {
-  BorderTimerProps,
-} from "@/features-2/timers/border-timer/BorderTimer";
+import Display, { DisplayProps } from "@/features/displays/Display";
 import {
   Page,
   ScrollState,
@@ -22,25 +20,25 @@ import { Stage } from "@/features/stages/Stage.types";
 import { Orientation } from "@/hooks/useOrientation";
 
 const displays: {
-  component: React.NamedExoticComponent<BorderTimerProps>;
-  props: Partial<BorderTimerProps>;
+  component: React.NamedExoticComponent<DisplayProps>;
+  props: Partial<DisplayProps>;
 }[] = [
   {
-    component: Timer,
+    component: Display,
     props: {
       colorVariant: "border",
       showText: true,
     },
   },
   {
-    component: Timer,
+    component: Display,
     props: {
       colorVariant: "background",
       showText: true,
     },
   },
   {
-    component: Timer,
+    component: Display,
     props: {
       colorVariant: "background",
       showText: false,
@@ -51,12 +49,14 @@ const displays: {
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 export interface DisplaysScrollViewProps
-  extends Omit<ViewProps, "height" | "width" | "start" | "rotate"> {
+  extends Omit<ViewProps, "height" | "width" | "start" | "rotate" | "onPress">,
+    Pick<DisplayProps, "onPress"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
   duration: SharedValue<number | null>;
   stage: Stage;
   start?: () => void;
+  goBack: () => void;
   fullScreenAmount: SharedValue<number>;
 }
 
@@ -66,7 +66,9 @@ export default React.memo(function DisplaysScrollView({
   duration,
   stage,
   start,
+  goBack,
   fullScreenAmount,
+  onPress,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
   const _rotation = useSharedValue(0);
@@ -144,10 +146,8 @@ export default React.memo(function DisplaysScrollView({
               height={height}
               width={width}
               duration={duration}
-              state={state}
-              start={start}
-              lockOrientation={lockOrientation}
-              lockedOrientation={lockedOrientation}
+              back={goBack}
+              onPress={onPress}
               {...componentProps}
             />
           </Page>
@@ -161,6 +161,7 @@ export default React.memo(function DisplaysScrollView({
         items="center"
         justify="center"
         style={leftChevronStyle}
+        z={2}
       >
         <Button icon={ChevronLeft} size="$5" circular onPress={previous} />
       </AnimatedView>
@@ -172,6 +173,7 @@ export default React.memo(function DisplaysScrollView({
         items="center"
         justify="center"
         style={rightChevronStyle}
+        z={2}
       >
         <Button icon={ChevronRight} size="$5" circular onPress={next} />
       </AnimatedView>
@@ -184,6 +186,7 @@ export default React.memo(function DisplaysScrollView({
         items="center"
         justify="center"
         style={indicatorsStyle}
+        z={2}
       >
         <Indicators
           b={0}
