@@ -26,6 +26,7 @@ export interface DisplayProps extends Omit<ViewProps, "height" | "width"> {
   stage: Stage;
   onPress?: () => { handled: boolean };
   duration: SharedValue<number | null>;
+  fullScreenAmount: SharedValue<number>;
   // pause?: () => void;
   // resume?: () => void;
   // reset?: () => void;
@@ -42,6 +43,7 @@ export default React.memo(function Display({
   stage,
   onPress,
   duration: durationProp,
+  fullScreenAmount,
   ...props
 }: DisplayProps): React.ReactNode {
   const duration = useDerivedValue<number | null>(
@@ -67,7 +69,14 @@ export default React.memo(function Display({
     return "white";
   });
 
-  const showActions = useSharedValue<number>(0);
+  const _showActions = useSharedValue<number>(0);
+
+  const showActions = useDerivedValue(() => {
+    if (_showActions.value === 0) return 0;
+    if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
+
+    return _showActions.value;
+  });
 
   const onTap = React.useCallback(() => {
     const { handled } = onPress?.() || {};
@@ -76,10 +85,10 @@ export default React.memo(function Display({
       return;
     }
 
-    showActions.value = withTiming(showActions.value === 1 ? 0 : 1, {
+    _showActions.value = withTiming(_showActions.value === 1 ? 0 : 1, {
       duration: actionsDuration,
     });
-  }, [onPress, showActions]);
+  }, [onPress, _showActions]);
 
   const gesture = React.useMemo(
     () =>
@@ -101,12 +110,12 @@ export default React.memo(function Display({
   });
 
   const back = React.useCallback(() => {
-    showActions.value = withTiming(0, {
+    _showActions.value = withTiming(0, {
       duration: actionsDuration,
     });
 
     backProp();
-  }, [showActions, backProp]);
+  }, [_showActions, backProp]);
 
   return (
     <GestureDetector gesture={gesture}>

@@ -148,6 +148,7 @@ export default React.memo(function DisplaysScrollView({
               duration={duration}
               back={goBack}
               onPress={onPress}
+              fullScreenAmount={fullScreenAmount}
               {...componentProps}
             />
           </Page>
