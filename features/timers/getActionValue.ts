@@ -12,7 +12,8 @@ export default function getActionValue(
   if (action.type === "backspace") {
     if (prevValue.length === 0) return nullValue;
 
-    return prevValue.slice(0, -1);
+    // remove the first digit from the value
+    return prevValue.slice(1);
   }
 
   if (action.type === "number") {

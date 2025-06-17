@@ -10,14 +10,13 @@ import Animated, {
   clamp,
   withTiming,
   SharedValue,
-  useSharedValue,
 } from "react-native-reanimated";
 import { Button, SizableText, View, ViewProps } from "tamagui";
 import DisplaysScrollView, {
   DisplaysScrollViewProps,
 } from "@/features/displays/DisplaysScrollView";
 import stageColors from "@/features/stages/stageColors";
-import { ChevronLeft, Play } from "@tamagui/lucide-icons";
+import { Play } from "@tamagui/lucide-icons";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 export interface TimerScreenLayoutProps
@@ -31,6 +30,7 @@ export interface TimerScreenLayoutProps
   onNumberPadAction?: NumberPadProps["onAction"];
   stageButtonVariant?: StageSelectorProps["variant"];
   onPressDisplay?: DisplaysScrollViewProps["onPress"];
+  disabledButtons?: NumberPadProps["disabledButtons"];
   /**
    * 0 means the display will show at the collapsed height, 1 will show at the full height
    */
@@ -61,6 +61,7 @@ export default React.memo(function TimerScreenLayout({
   footerHeight,
   footerPb,
   onPressDisplay,
+  disabledButtons,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
@@ -163,7 +164,11 @@ export default React.memo(function TimerScreenLayout({
           variant={stageButtonVariant}
         />
         <View items="center" justify="center">
-          <NumberPad borderColor={stageColor} onAction={onNumberPadAction} />
+          <NumberPad
+            borderColor={stageColor}
+            onAction={onNumberPadAction}
+            disabledButtons={disabledButtons}
+          />
         </View>
         <View
           items="center"

@@ -6,7 +6,7 @@ import { XStack, YStack, YStackProps } from "tamagui";
 
 export type { NumberButtonValue };
 
-const grid: (
+export type NumberButtonKey =
   | 0
   | 1
   | 2
@@ -18,8 +18,9 @@ const grid: (
   | 8
   | 9
   | "backspace"
-  | "double-zero"
-)[][] = [
+  | "double-zero";
+
+const grid: NumberButtonKey[][] = [
   [1, 2, 3],
   [4, 5, 6],
   [7, 8, 9],
@@ -28,6 +29,7 @@ const grid: (
 
 export interface NumberPadProps extends YStackProps {
   onAction?: (value: NumberButtonValue) => void;
+  disabledButtons?: NumberButtonKey[];
 }
 
 const margin = "$space.2";
@@ -35,21 +37,29 @@ const margin = "$space.2";
 export default React.memo(function NumberPad({
   onAction,
   borderColor,
+  disabledButtons,
+  disabled,
   ...yStackProps
 }: NumberPadProps): React.ReactNode {
   return (
     <YStack {...yStackProps}>
       {grid.map((row, rowIndex) => (
         <XStack key={rowIndex} mt={rowIndex === 0 ? undefined : margin}>
-          {row.map((type, columnIndex) => (
-            <NumberButton
-              key={type}
-              type={type}
-              borderColor={borderColor}
-              onAction={onAction}
-              ml={columnIndex === 0 ? undefined : margin}
-            />
-          ))}
+          {row.map((key, columnIndex) => {
+            const itemDisabled =
+              disabled || disabledButtons?.some((b) => key === b);
+
+            return (
+              <NumberButton
+                key={key}
+                type={key}
+                borderColor={itemDisabled ? undefined : borderColor}
+                onAction={onAction}
+                ml={columnIndex === 0 ? undefined : margin}
+                disabled={itemDisabled}
+              />
+            );
+          })}
         </XStack>
       ))}
     </YStack>

@@ -15,6 +15,7 @@ import {
 } from "react-native-reanimated";
 import { StageValue } from "@/features/stages/StageButton";
 import getActionValue, { nullValue } from "./getActionValue";
+import { NumberButtonKey } from "@/features/number-pad/NumberPad";
 
 export type ClockTimerProps = TimerCommonProps;
 
@@ -77,6 +78,7 @@ export default React.memo(function ClockTimer({
 
   const setActiveValue =
     selectedStage === "warning" ? setWarningValue : setAlertValue;
+  const activeValue = selectedStage === "warning" ? warningValue : alertValue;
 
   const onNumberPadAction = React.useCallback<
     NonNullable<TimerScreenLayoutProps["onNumberPadAction"]>
@@ -103,7 +105,22 @@ export default React.memo(function ClockTimer({
     return {
       handled: false,
     };
-  }, []);
+  }, [fullScreenAmount]);
+
+  const disabledButtons = React.useMemo((): NumberButtonKey[] | undefined => {
+    switch (activeValue.length) {
+      case 0:
+        return [3, 4, 5, 6, 7, 8, 9, "backspace"];
+      case 1:
+      case 2:
+      case 4:
+        return [6, 7, 8, 9];
+      case 6:
+        return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, "double-zero"];
+      default:
+        return undefined;
+    }
+  }, [activeValue]);
 
   return (
     <TimerScreenLayout
@@ -117,6 +134,7 @@ export default React.memo(function ClockTimer({
       stageButtonVariant="clock"
       onPressDisplay={onPressDisplay}
       fullScreenAmount={fullScreenAmount}
+      disabledButtons={disabledButtons}
       {...props}
     />
   );

@@ -11,6 +11,7 @@ export interface StageButtonProps
   showUnits?: boolean;
   nullValue?: string;
   variant?: StageButtonVariant;
+  greyedBehaviour?: "paired" | "single";
 }
 
 export default React.memo(function StageButton({
@@ -18,6 +19,7 @@ export default React.memo(function StageButton({
   borderColor,
   nullValue,
   variant = "duration",
+  greyedBehaviour = "single",
   ...props
 }: StageButtonProps): React.ReactNode {
   // Returns
@@ -31,7 +33,10 @@ export default React.memo(function StageButton({
     }[] = [
       {
         value: value[5] ?? "0",
-        greyed: value[4] === undefined,
+        greyed:
+          greyedBehaviour === "paired"
+            ? value[4] === undefined
+            : value[5] === undefined,
       },
       {
         value: value[4] ?? "0",
@@ -44,7 +49,10 @@ export default React.memo(function StageButton({
       },
       {
         value: value[3] ?? "0",
-        greyed: value[2] === undefined,
+        greyed:
+          greyedBehaviour === "paired"
+            ? value[2] === undefined
+            : value[3] === undefined,
       },
       {
         value: value[2] ?? "0",
@@ -57,7 +65,10 @@ export default React.memo(function StageButton({
       },
       {
         value: value[1] ?? "0",
-        greyed: value[0] === undefined,
+        greyed:
+          greyedBehaviour === "paired"
+            ? value[0] === undefined
+            : value[1] === undefined,
       },
       {
         value: value[0] ?? "0",
@@ -74,7 +85,7 @@ export default React.memo(function StageButton({
     }
 
     return digits;
-  }, [value, variant]);
+  }, [value, variant, greyedBehaviour]);
 
   return (
     <Button position="relative" items="center" justify="center" {...props}>
