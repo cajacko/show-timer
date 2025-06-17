@@ -35,6 +35,7 @@ export interface DisplayProps extends Omit<ViewProps, "height" | "width"> {
 }
 
 const actionsDuration = 300;
+const showActionsDuration = 3000;
 
 export default React.memo(function Display({
   height,
@@ -48,14 +49,77 @@ export default React.memo(function Display({
   fullScreenAmount,
   ...props
 }: DisplayProps): React.ReactNode {
-  const [lockedOrientation, setLockedOrientation] =
-    React.useState<null | Orientation>(null);
+  const _actionsVisibility = useSharedValue<number>(0);
+  const _lockVisibility = useSharedValue<number>(0);
   const _orientation = useOrientation();
 
-  const orientation = lockedOrientation ?? _orientation;
+  const hideActionsTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  const hideLockTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
+  React.useEffect(() => {
+    _lockVisibility.value = withTiming(1, {
+      duration: actionsDuration,
+    });
+
+    hideLockTimeout.current = setTimeout(() => {
+      _lockVisibility.value = withTiming(0, {
+        duration: actionsDuration,
+      });
+    }, showActionsDuration);
+  }, [_orientation, _lockVisibility]);
+
+  const actionsVisibility = useDerivedValue(() => {
+    if (_actionsVisibility.value === 0) return 0;
+    if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
+
+    return _actionsVisibility.value;
+  });
+
+  const lockVisibility = useDerivedValue(() => {
+    if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
+    if (actionsVisibility.value === 0) return _lockVisibility.value;
+
+    return actionsVisibility.value;
+  });
+
+  const showActions = React.useCallback(() => {
+    if (hideActionsTimeout.current) {
+      clearTimeout(hideActionsTimeout.current);
+    }
+
+    _actionsVisibility.value = withTiming(1, {
+      duration: actionsDuration,
+    });
+
+    hideActionsTimeout.current = setTimeout(() => {
+      _actionsVisibility.value = withTiming(0, {
+        duration: actionsDuration,
+      });
+    }, showActionsDuration);
+  }, [_actionsVisibility]);
+
+  const [lockedOrientation, setLockedOrientation] =
+    React.useState<null | Orientation>(null);
+
+  const lockOrientation = React.useCallback(() => {
+    setLockedOrientation((prevValue) => (prevValue ? null : _orientation));
+  }, [_orientation]);
+
+  const orientation = useDerivedValue(() => {
+    if (fullScreenAmount.value !== 1) {
+      return "portrait-up";
+    }
+
+    return lockedOrientation ?? _orientation;
+  });
 
   const rotation = useDerivedValue(() => {
-    switch (orientation) {
+    switch (orientation.value) {
       case "portrait-down":
         return 180;
       case "landscape-left":
@@ -84,7 +148,10 @@ export default React.memo(function Display({
   }));
 
   const fontSize = useDerivedValue(() => {
-    if (orientation === "landscape-left" || orientation === "landscape-right") {
+    if (
+      orientation.value === "landscape-left" ||
+      orientation.value === "landscape-right"
+    ) {
       return Math.round(width.value * 0.5);
     }
 
@@ -95,15 +162,6 @@ export default React.memo(function Display({
     return "white";
   });
 
-  const _showActions = useSharedValue<number>(0);
-
-  const showActions = useDerivedValue(() => {
-    if (_showActions.value === 0) return 0;
-    if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
-
-    return _showActions.value;
-  });
-
   const onTap = React.useCallback(() => {
     const { handled } = onPress?.() || {};
 
@@ -111,10 +169,14 @@ export default React.memo(function Display({
       return;
     }
 
-    _showActions.value = withTiming(_showActions.value === 1 ? 0 : 1, {
-      duration: actionsDuration,
-    });
-  }, [onPress, _showActions]);
+    if (_actionsVisibility.value === 1) {
+      _actionsVisibility.value = withTiming(0, {
+        duration: actionsDuration,
+      });
+    } else {
+      showActions();
+    }
+  }, [onPress, _actionsVisibility, showActions]);
 
   const gesture = React.useMemo(
     () =>
@@ -137,7 +199,7 @@ export default React.memo(function Display({
       right: "auto",
     };
 
-    switch (orientation) {
+    switch (orientation.value) {
       case "portrait-down":
         position.bottom = 0;
         position.right = 0;
@@ -159,10 +221,10 @@ export default React.memo(function Display({
 
     return {
       ...position,
-      opacity: showActions.value,
+      opacity: actionsVisibility.value,
       transform: [
         {
-          scale: showActions.value,
+          scale: actionsVisibility.value,
         },
         {
           rotate: `${rotation.value}deg`,
@@ -184,7 +246,7 @@ export default React.memo(function Display({
       right: "auto",
     };
 
-    switch (orientation) {
+    switch (orientation.value) {
       case "portrait-down":
         position.bottom = 0;
         position.left = 0;
@@ -206,10 +268,10 @@ export default React.memo(function Display({
 
     return {
       ...position,
-      opacity: showActions.value,
+      opacity: lockVisibility.value,
       transform: [
         {
-          scale: showActions.value,
+          scale: lockVisibility.value,
         },
         {
           rotate: `${rotation.value}deg`,
@@ -219,12 +281,12 @@ export default React.memo(function Display({
   });
 
   const back = React.useCallback(() => {
-    _showActions.value = withTiming(0, {
+    _actionsVisibility.value = withTiming(0, {
       duration: actionsDuration,
     });
 
     backProp();
-  }, [_showActions, backProp]);
+  }, [_actionsVisibility, backProp]);
 
   const countdownStyle = useAnimatedStyle(() => ({
     transform: [
@@ -235,52 +297,53 @@ export default React.memo(function Display({
   }));
 
   return (
-    <GestureDetector gesture={gesture}>
-      <AnimatedView {...props} style={animatedStyle}>
+    <AnimatedView {...props} style={animatedStyle}>
+      <AnimatedButton
+        icon={ChevronLeft}
+        onPress={back}
+        size="$5"
+        circular
+        style={backStyle}
+        position="absolute"
+        m="$space.4"
+        z={3}
+      />
+      {Platform.OS !== "web" && (
         <AnimatedButton
-          icon={ChevronLeft}
-          onPress={back}
+          icon={lockedOrientation ? LockKeyhole : UnlockKeyhole}
+          onPress={lockOrientation}
           size="$5"
           circular
-          style={backStyle}
+          style={lockStyle}
           position="absolute"
           m="$space.4"
-          z={2}
+          z={3}
         />
-        {Platform.OS !== "web" && (
-          <AnimatedButton
-            icon={lockedOrientation ? LockKeyhole : UnlockKeyhole}
-            onPress={back}
-            size="$5"
-            circular
-            style={lockStyle}
-            position="absolute"
-            m="$space.4"
-            z={2}
+      )}
+      <View
+        position="relative"
+        z={2}
+        items="center"
+        justify="center"
+        flex={1}
+        // TODO: Fix this in native
+        style={{
+          backgroundColor: colorVariant === "border" ? "black" : "transparent",
+        }}
+        pointerEvents="none"
+      >
+        <AnimatedView style={countdownStyle}>
+          <Countdown
+            duration={duration}
+            color={textColor}
+            fontSize={fontSize}
+            opacity={showText ? 1 : 0.2}
           />
-        )}
-        <View
-          position="relative"
-          z={1}
-          items="center"
-          justify="center"
-          flex={1}
-          // TODO: Fix this in native
-          style={{
-            backgroundColor:
-              colorVariant === "border" ? "black" : "transparent",
-          }}
-        >
-          <AnimatedView style={countdownStyle}>
-            <Countdown
-              duration={duration}
-              color={textColor}
-              fontSize={fontSize}
-              opacity={showText ? 1 : 0.2}
-            />
-          </AnimatedView>
-        </View>
-      </AnimatedView>
-    </GestureDetector>
+        </AnimatedView>
+      </View>
+      <GestureDetector gesture={gesture}>
+        <View position="absolute" t={0} l={0} r={0} b={0} z={1} />
+      </GestureDetector>
+    </AnimatedView>
   );
 });
