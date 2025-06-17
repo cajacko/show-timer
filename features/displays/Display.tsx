@@ -12,7 +12,9 @@ import { Button, useTheme, View, ViewProps } from "tamagui";
 import Countdown from "@/features-2/countdown/Countdown";
 import stageColors from "@/features/stages/stageColors";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
-import { ChevronLeft } from "@tamagui/lucide-icons";
+import { ChevronLeft, LockKeyhole, UnlockKeyhole } from "@tamagui/lucide-icons";
+import { Orientation, useOrientation } from "@/hooks/useOrientation";
+import { Platform } from "react-native";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 const AnimatedButton = Animated.createAnimatedComponent(Button);
@@ -46,6 +48,26 @@ export default React.memo(function Display({
   fullScreenAmount,
   ...props
 }: DisplayProps): React.ReactNode {
+  const [lockedOrientation, setLockedOrientation] =
+    React.useState<null | Orientation>(null);
+  const _orientation = useOrientation();
+
+  const orientation = lockedOrientation ?? _orientation;
+
+  const rotation = useDerivedValue(() => {
+    switch (orientation) {
+      case "portrait-down":
+        return 180;
+      case "landscape-left":
+        return -90;
+      case "landscape-right":
+        return 90;
+      case "portrait-up":
+      default:
+        return 0;
+    }
+  });
+
   const duration = useDerivedValue<number | null>(
     () => (durationProp.value === null ? 0 : durationProp.value),
     [durationProp]
@@ -62,6 +84,10 @@ export default React.memo(function Display({
   }));
 
   const fontSize = useDerivedValue(() => {
+    if (orientation === "landscape-left" || orientation === "landscape-right") {
+      return Math.round(width.value * 0.5);
+    }
+
     return Math.round(width.value * 0.2);
   });
 
@@ -99,11 +125,94 @@ export default React.memo(function Display({
   );
 
   const backStyle = useAnimatedStyle(() => {
+    const position: {
+      top: number | "auto";
+      bottom: number | "auto";
+      left: number | "auto";
+      right: number | "auto";
+    } = {
+      top: "auto",
+      bottom: "auto",
+      left: "auto",
+      right: "auto",
+    };
+
+    switch (orientation) {
+      case "portrait-down":
+        position.bottom = 0;
+        position.right = 0;
+        break;
+      case "landscape-left":
+        position.bottom = 0;
+        position.left = 0;
+        break;
+      case "landscape-right":
+        position.top = 0;
+        position.right = 0;
+        break;
+      case "portrait-up":
+      default:
+        position.top = 0;
+        position.left = 0;
+        break;
+    }
+
     return {
+      ...position,
       opacity: showActions.value,
       transform: [
         {
           scale: showActions.value,
+        },
+        {
+          rotate: `${rotation.value}deg`,
+        },
+      ],
+    };
+  });
+
+  const lockStyle = useAnimatedStyle(() => {
+    const position: {
+      top: number | "auto";
+      bottom: number | "auto";
+      left: number | "auto";
+      right: number | "auto";
+    } = {
+      top: "auto",
+      bottom: "auto",
+      left: "auto",
+      right: "auto",
+    };
+
+    switch (orientation) {
+      case "portrait-down":
+        position.bottom = 0;
+        position.left = 0;
+        break;
+      case "landscape-left":
+        position.top = 0;
+        position.left = 0;
+        break;
+      case "landscape-right":
+        position.bottom = 0;
+        position.right = 0;
+        break;
+      case "portrait-up":
+      default:
+        position.top = 0;
+        position.right = 0;
+        break;
+    }
+
+    return {
+      ...position,
+      opacity: showActions.value,
+      transform: [
+        {
+          scale: showActions.value,
+        },
+        {
+          rotate: `${rotation.value}deg`,
         },
       ],
     };
@@ -117,6 +226,14 @@ export default React.memo(function Display({
     backProp();
   }, [_showActions, backProp]);
 
+  const countdownStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        rotate: `${rotation.value}deg`,
+      },
+    ],
+  }));
+
   return (
     <GestureDetector gesture={gesture}>
       <AnimatedView {...props} style={animatedStyle}>
@@ -127,10 +244,21 @@ export default React.memo(function Display({
           circular
           style={backStyle}
           position="absolute"
-          t="$space.4"
-          l="$space.4"
+          m="$space.4"
           z={2}
         />
+        {Platform.OS !== "web" && (
+          <AnimatedButton
+            icon={lockedOrientation ? LockKeyhole : UnlockKeyhole}
+            onPress={back}
+            size="$5"
+            circular
+            style={lockStyle}
+            position="absolute"
+            m="$space.4"
+            z={2}
+          />
+        )}
         <View
           position="relative"
           z={1}
@@ -143,12 +271,14 @@ export default React.memo(function Display({
               colorVariant === "border" ? "black" : "transparent",
           }}
         >
-          <Countdown
-            duration={duration}
-            color={textColor}
-            fontSize={fontSize}
-            opacity={showText ? 1 : 0.2}
-          />
+          <AnimatedView style={countdownStyle}>
+            <Countdown
+              duration={duration}
+              color={textColor}
+              fontSize={fontSize}
+              opacity={showText ? 1 : 0.2}
+            />
+          </AnimatedView>
         </View>
       </AnimatedView>
     </GestureDetector>
