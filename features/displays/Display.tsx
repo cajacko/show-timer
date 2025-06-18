@@ -20,6 +20,7 @@ import { Platform } from "react-native";
 import Color from "color";
 import TimerActions, {
   TimerActionsProps,
+  useTimerActionSize,
 } from "@/features/timer-actions/TimerActions";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -66,6 +67,7 @@ export default React.memo(function Display({
 }: DisplayProps): React.ReactNode {
   const flash: boolean = flashEnabled && flashProp;
   const flashOpacity = useSharedValue(1);
+  const { buttonSize, height: actionsHeight } = useTimerActionSize();
   const _actionsVisibility = useSharedValue<number>(0);
   const _lockVisibility = useSharedValue<number>(0);
   const _orientation = useOrientation();
@@ -351,7 +353,7 @@ export default React.memo(function Display({
       <AnimatedButton
         icon={ChevronLeft}
         onPress={back}
-        size="$5"
+        size={buttonSize}
         circular
         style={backStyle}
         position="absolute"
@@ -362,7 +364,7 @@ export default React.memo(function Display({
         <AnimatedButton
           icon={lockedOrientation ? LockKeyhole : UnlockKeyhole}
           onPress={lockOrientation}
-          size="$5"
+          size={buttonSize}
           circular
           style={lockStyle}
           position="absolute"
@@ -382,7 +384,11 @@ export default React.memo(function Display({
         }}
         pointerEvents="box-none"
       >
-        <AnimatedView style={countdownStyle} pointerEvents="none">
+        <AnimatedView
+          style={countdownStyle}
+          pointerEvents="none"
+          mt={actionsHeight}
+        >
           <Countdown
             duration={duration}
             color={textColorAnimation}

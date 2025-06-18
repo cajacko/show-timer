@@ -9,11 +9,12 @@ import React from "react";
 import Animated, {
   SharedValue,
   useAnimatedStyle,
-  useDerivedValue,
 } from "react-native-reanimated";
 import { View, ViewProps, Button } from "tamagui";
 
 const AnimatedButton = Animated.createAnimatedComponent(Button);
+
+const mx = "$space.2";
 
 export interface TimerActionsProps
   extends Omit<ViewProps, "start" | "visibility"> {
@@ -25,7 +26,15 @@ export interface TimerActionsProps
   visibility?: SharedValue<number>;
 }
 
-const mx = "$space.2";
+export function useTimerActionSize(): {
+  buttonSize: "$5";
+  height: number;
+} {
+  return {
+    buttonSize: "$5",
+    height: 40, // Assuming $5 corresponds to a height of 40px
+  };
+}
 
 export default React.memo(function TimerActions({
   fullScreen,
@@ -41,12 +50,14 @@ export default React.memo(function TimerActions({
     transform: [{ scale: visibility ? visibility.value : 1 }],
   }));
 
+  const { buttonSize, height } = useTimerActionSize();
+
   return (
-    <View flexDirection="row" {...props}>
+    <View flexDirection="row" height={height} {...props}>
       {fullScreen && (
         <AnimatedButton
           icon={Maximize2}
-          size="$5"
+          size={buttonSize}
           onPress={fullScreen}
           circular
           mx={mx}
@@ -55,7 +66,7 @@ export default React.memo(function TimerActions({
       {start && (
         <AnimatedButton
           icon={Play}
-          size="$5"
+          size={buttonSize}
           onPress={start}
           circular
           mx={mx}
@@ -65,7 +76,7 @@ export default React.memo(function TimerActions({
       {pause && (
         <AnimatedButton
           icon={Pause}
-          size="$5"
+          size={buttonSize}
           onPress={pause}
           circular
           mx={mx}
@@ -75,7 +86,7 @@ export default React.memo(function TimerActions({
       {addMinute && (
         <AnimatedButton
           icon={Plus}
-          size="$5"
+          size={buttonSize}
           onPress={addMinute}
           circular
           mx={mx}
@@ -85,7 +96,7 @@ export default React.memo(function TimerActions({
       {reset && (
         <AnimatedButton
           icon={RefreshCcw}
-          size="$5"
+          size={buttonSize}
           onPress={reset}
           circular
           mx={mx}

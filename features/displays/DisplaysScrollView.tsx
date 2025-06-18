@@ -16,6 +16,7 @@ import {
 import Indicators from "@/features/pagination/Indicators";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import { Stage } from "@/features/stages/Stage.types";
+import { useTimerActionSize } from "@/features/timer-actions/TimerActions";
 
 const displays: Partial<DisplayProps>[] = [
   {
@@ -70,6 +71,8 @@ export default React.memo(function DisplaysScrollView({
   running,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
+  const { buttonSize, height: actionsHeight } = useTimerActionSize();
+
   const enableScrollSharedValue = useDerivedValue<boolean>(
     () => fullScreenAmount.value === 0
   );
@@ -162,7 +165,12 @@ export default React.memo(function DisplaysScrollView({
         style={leftChevronStyle}
         z={2}
       >
-        <Button icon={ChevronLeft} size="$5" circular onPress={previous} />
+        <Button
+          icon={ChevronLeft}
+          size={buttonSize}
+          circular
+          onPress={previous}
+        />
       </AnimatedView>
       <AnimatedView
         position="absolute"
@@ -174,7 +182,7 @@ export default React.memo(function DisplaysScrollView({
         style={rightChevronStyle}
         z={2}
       >
-        <Button icon={ChevronRight} size="$5" circular onPress={next} />
+        <Button icon={ChevronRight} size={buttonSize} circular onPress={next} />
       </AnimatedView>
       <AnimatedView
         position="absolute"
