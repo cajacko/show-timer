@@ -3,10 +3,11 @@ import TimerScreenLayout, {
   TimerScreenLayoutProps,
 } from "../timer-screen-layout/TimerScreenLayout";
 import { TimerCommonProps } from "./Timer.types";
-import { useDerivedValue } from "react-native-reanimated";
+import { runOnJS, useDerivedValue } from "react-native-reanimated";
 import { StageValue } from "@/features/stages/StageButton";
 import getActionValue from "./getActionValue";
 import useAnimationLoop from "@/hooks/useAnimationLoop";
+import stageValueToDuration from "@/utils/stageValueToDuration";
 
 export type TimerProps = TimerCommonProps;
 
@@ -41,6 +42,18 @@ export default React.memo(function Timer({
     React.useState<StageValue>(defaultWarningValue);
   const [alertValue, setAlertValue] =
     React.useState<StageValue>(defaultAlertValue);
+  const [stage, setStage] =
+    React.useState<TimerScreenLayoutProps["stage"]>("okay");
+
+  const warningDuration = React.useMemo(
+    () => stageValueToDuration(warningValue),
+    [warningValue]
+  );
+
+  const alertDuration = React.useMemo(
+    () => stageValueToDuration(alertValue),
+    [alertValue]
+  );
 
   const setActiveValue =
     selectedStage === "warning" ? setWarningValue : setAlertValue;
@@ -62,11 +75,31 @@ export default React.memo(function Timer({
 
   const duration = useTimerDuration(startedAt);
 
+  const isAlertPastDate = useDerivedValue(() => {
+    if (duration.value === null || alertDuration === null) return false;
+    return duration.value >= alertDuration;
+  });
+
+  const isWarningPastDate = useDerivedValue(() => {
+    if (duration.value === null || warningDuration === null) return false;
+    return duration.value >= warningDuration;
+  });
+
+  useDerivedValue(() => {
+    if (isAlertPastDate.value) {
+      runOnJS(setStage)("alert");
+    } else if (isWarningPastDate.value) {
+      runOnJS(setStage)("warning");
+    } else {
+      runOnJS(setStage)("okay");
+    }
+  });
+
   return (
     <TimerScreenLayout
       warningValue={warningValue}
       alertValue={alertValue}
-      stage="okay"
+      stage={stage}
       selectedStage={selectedStage}
       onChangeSelectedStage={setSelectedStage}
       duration={duration}

@@ -59,7 +59,7 @@ function useIsClockDurationPastDate(
     const seconds = duration.value % 60;
     now.setHours(hours, minutes, seconds, 0);
 
-    const isPastDate = now.getTime() > dateTime;
+    const isPastDate = now.getTime() >= dateTime;
 
     return isPastDate;
   });
