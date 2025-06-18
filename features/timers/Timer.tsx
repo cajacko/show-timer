@@ -8,6 +8,7 @@ import { StageValue } from "@/features/stages/StageButton";
 import getActionValue from "./getActionValue";
 import useAnimationLoop from "@/hooks/useAnimationLoop";
 import stageValueToDuration from "@/utils/stageValueToDuration";
+import { NumberButtonKey } from "@/features/number-pad/NumberPad";
 
 export type TimerProps = TimerCommonProps;
 
@@ -73,7 +74,9 @@ export default React.memo(function Timer({
     NonNullable<TimerScreenLayoutProps["onNumberPadAction"]>
   >(
     (action) => {
-      setActiveValue((prevValue) => getActionValue(prevValue, action));
+      setActiveValue((prevValue) =>
+        getActionValue(prevValue, action, "duration")
+      );
     },
     [setActiveValue]
   );
@@ -127,6 +130,20 @@ export default React.memo(function Timer({
     );
   }, [duration]);
 
+  const activeValue = selectedStage === "warning" ? warningValue : alertValue;
+
+  const disabledButtons = React.useMemo((): NumberButtonKey[] | undefined => {
+    if (activeValue.length === 6) {
+      return ["double-zero", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    }
+
+    if (activeValue.length === 0) {
+      return ["backspace", "double-zero", 0];
+    }
+
+    return undefined;
+  }, [activeValue]);
+
   return (
     <TimerScreenLayout
       warningValue={warningValue}
@@ -141,6 +158,7 @@ export default React.memo(function Timer({
       reset={state.type !== "stopped" ? reset : undefined}
       pause={state.type === "running" ? pause : undefined}
       fullScreenButton={state.type === "running"}
+      disabledButtons={disabledButtons}
       {...props}
     />
   );

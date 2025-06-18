@@ -128,7 +128,7 @@ export default React.memo(function ClockTimer({
     NonNullable<TimerScreenLayoutProps["onNumberPadAction"]>
   >(
     (action) => {
-      setActiveValue((prevValue) => getActionValue(prevValue, action));
+      setActiveValue((prevValue) => getActionValue(prevValue, action, "time"));
     },
     [setActiveValue]
   );

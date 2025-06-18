@@ -106,7 +106,7 @@ export default React.memo(function DurationTimer({
   >(
     (action) => {
       setActiveValue((prevValue) => {
-        const nextValue = getActionValue(prevValue, action);
+        const nextValue = getActionValue(prevValue, action, "duration");
 
         if (selectedStage !== "alert") return nextValue;
 
@@ -151,8 +151,21 @@ export default React.memo(function DurationTimer({
       : alertValue;
 
   const disabledButtons = React.useMemo((): NumberButtonKey[] | undefined => {
+    if (activeValue.length === 6) {
+      return ["double-zero", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    }
+
+    if (activeValue.length === 0) {
+      return ["backspace", "double-zero", 0];
+    }
+
     if (selectedStage !== "alert") return undefined;
-    if (activeValue.length === 1) return ["backspace"];
+
+    if (activeValue.length === 1 && activeValue[0] === 0) {
+      return ["backspace", 0, "double-zero"];
+    }
+
+    return undefined;
   }, [activeValue, selectedStage]);
 
   const start = React.useCallback(() => {

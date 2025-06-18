@@ -5,7 +5,8 @@ export const nullValue: StageValue = [];
 
 export default function getActionValue(
   prevValue: StageValue,
-  action: NumberButtonValue
+  action: NumberButtonValue,
+  type: "time" | "duration"
 ): StageValue {
   if (action.type === "clear") return nullValue;
 
@@ -17,16 +18,26 @@ export default function getActionValue(
   }
 
   if (action.type === "number") {
+    if (type === "duration" && prevValue.length === 1 && prevValue[0] === 0) {
+      // If the value is 0 and the type is duration, replace it with the new number
+      return [action.value];
+    }
+
     const newValue = [action.value, ...prevValue];
     // Limit the value to 6 digits
-    return newValue.length > 6 ? newValue.slice(0, 6) : newValue;
+    return newValue.length > 6 ? newValue.slice(-6) : newValue;
   }
 
   if (action.type === "double-zero") {
     // Add two zeros to the end of the value
     const newValue = [0, 0, ...prevValue];
-    // Limit the value to 6 digits
-    return newValue.length > 6 ? newValue.slice(0, 6) : newValue;
+
+    // Keep the back 6 digits of the array
+    if (newValue.length > 6) {
+      return newValue.slice(-6);
+    }
+
+    return newValue;
   }
 
   return prevValue;
