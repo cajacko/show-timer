@@ -1,1 +1,1 @@
-export { default } from "@/screens/Timer";
+export { default } from "@/screens/Timers";

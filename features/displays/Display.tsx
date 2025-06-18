@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Button, useTheme, View, ViewProps } from "tamagui";
-import Countdown from "@/features-2/countdown/Countdown";
+import Countdown from "@/features/countdown/Countdown";
 import stageColors from "@/features/stages/stageColors";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { ChevronLeft, LockKeyhole, UnlockKeyhole } from "@tamagui/lucide-icons";
