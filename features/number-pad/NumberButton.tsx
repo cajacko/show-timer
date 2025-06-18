@@ -1,6 +1,11 @@
 import { Delete } from "@tamagui/lucide-icons";
 import React from "react";
-import { Button, ButtonProps, ButtonText, View } from "tamagui";
+import { Button, ButtonProps, ButtonText } from "tamagui";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 export type NumberButtonValue =
   | { type: "number"; value: number }
@@ -14,11 +19,15 @@ export interface NumberButtonProps extends ButtonProps {
 }
 
 export const size = 60;
+const disabledOpacity = 0.5;
+
+const AnimatedButton = Animated.createAnimatedComponent(Button);
 
 export default React.memo(function NumberButton({
   type,
   onAction,
-  borderColor,
+  disabled,
+  style: styleProp,
   ...buttonProps
 }: NumberButtonProps): React.ReactNode {
   const onPress = React.useMemo(() => {
@@ -45,35 +54,40 @@ export default React.memo(function NumberButton({
   }, [onAction, type]);
 
   let value: string | number | null = type;
+  if (type === "double-zero") value = "00";
+  else if (type === "backspace") value = null;
 
-  if (type === "double-zero") {
-    value = "00";
-  } else if (type === "backspace") {
-    value = null;
-  }
+  const opacity = useSharedValue(disabled ? disabledOpacity : 1);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+    };
+  });
+
+  const style = React.useMemo(
+    () => [styleProp, animatedStyle],
+    [styleProp, animatedStyle]
+  );
+
+  React.useEffect(() => {
+    opacity.value = withTiming(disabled ? disabledOpacity : 1, {
+      duration: 200,
+    });
+  }, [disabled, opacity]);
 
   return (
-    <Button
+    <AnimatedButton
       circular
       onPress={onPress}
       onLongPress={onLongPress}
       size="$9"
+      disabled={disabled}
+      style={style}
       icon={type === "backspace" ? Delete : undefined}
       {...buttonProps}
     >
       {value !== null && <ButtonText>{value}</ButtonText>}
-      {borderColor && (
-        <View
-          borderWidth={2}
-          borderColor={borderColor}
-          rounded="$radius.4"
-          position="absolute"
-          t={0}
-          b={0}
-          r={0}
-          l={0}
-        />
-      )}
-    </Button>
+    </AnimatedButton>
   );
 });

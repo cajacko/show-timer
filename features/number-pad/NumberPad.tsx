@@ -1,6 +1,7 @@
 import NumberButton, {
+  NumberButtonProps,
   NumberButtonValue,
-} from "@/features-2/number-pad/NumberButton";
+} from "@/features/number-pad/NumberButton";
 import React from "react";
 import { XStack, YStack, YStackProps } from "tamagui";
 
@@ -27,7 +28,9 @@ const grid: NumberButtonKey[][] = [
   ["double-zero", 0, "backspace"],
 ];
 
-export interface NumberPadProps extends YStackProps {
+export interface NumberPadProps
+  extends Omit<YStackProps, "borderColor">,
+    Pick<NumberButtonProps, "borderColor"> {
   onAction?: (value: NumberButtonValue) => void;
   disabledButtons?: NumberButtonKey[];
 }
