@@ -5,18 +5,15 @@ import TimerScreenLayout, {
 } from "../timer-screen-layout/TimerScreenLayout";
 import { TimerCommonProps } from "./Timer.types";
 import {
-  cancelAnimation,
-  Easing,
   runOnJS,
   SharedValue,
   useDerivedValue,
-  useSharedValue,
-  withRepeat,
   withTiming,
 } from "react-native-reanimated";
 import { StageValue } from "@/features/stages/StageButton";
 import getActionValue, { nullValue } from "./getActionValue";
 import { NumberButtonKey } from "@/features/number-pad/NumberPad";
+import useAnimationLoop from "@/hooks/useAnimationLoop";
 
 export type ClockTimerProps = TimerCommonProps;
 
@@ -24,13 +21,7 @@ export function useClockDuration(props?: {
   enabled?: boolean;
 }): SharedValue<number | null> {
   const enabled = props?.enabled ?? true;
-
-  // Loop is only used to force the duration useDerivedValue to update and get calculate the value
-  // based off the Date.now() and the endDate. This means we don't have ensure our withTiming call
-  // is exactly right and still works when the user closes the app and reopens it. A timer only
-  // cares about it's end date, not the exact timing of the animation. This is much more accurate
-  // and reliable than using withTiming directly on the duration.
-  const loop = useSharedValue<number | null>(0);
+  const loop = useAnimationLoop(enabled);
 
   // To format the clock as a duration we need to convert the 24-hour clock to seconds e.g.
   // 2:30pm and 5 seconds needs to display as 14:30:05, which is a duration of 14 hours, 30 minutes,
@@ -46,24 +37,6 @@ export function useClockDuration(props?: {
     // actually needed for the calculation. See above comments
     return loop.value ? value : value;
   });
-
-  React.useEffect(() => {
-    if (!enabled) {
-      cancelAnimation(loop);
-      loop.value = null;
-    } else {
-      loop.value = 0;
-
-      loop.value = withRepeat(
-        withTiming(0, {
-          duration: 1000,
-          easing: Easing.linear,
-        }),
-        -1, // Infinite loop
-        false // Do not reverse
-      );
-    }
-  }, [enabled, loop]);
 
   return duration;
 }

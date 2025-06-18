@@ -39,6 +39,7 @@ export interface TimerScreenLayoutProps
   description: string;
   footerHeight: number;
   footerPb?: number;
+  onStart?: () => void;
 }
 
 export const fullScreenDuration = 300;
@@ -62,6 +63,7 @@ export default React.memo(function TimerScreenLayout({
   footerPb,
   onPressDisplay,
   disabledButtons,
+  onStart,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
@@ -92,12 +94,14 @@ export default React.memo(function TimerScreenLayout({
   const fullScreen = React.useRef<boolean>(false);
 
   const start = React.useCallback(() => {
+    onStart?.();
+
     fullScreen.current = true;
 
     fullScreenAmount.value = withTiming(1, {
       duration: fullScreenDuration,
     });
-  }, [fullScreenAmount]);
+  }, [fullScreenAmount, onStart]);
 
   const goBack = React.useCallback(() => {
     fullScreen.current = false;

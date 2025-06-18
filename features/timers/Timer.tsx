@@ -3,14 +3,34 @@ import TimerScreenLayout, {
   TimerScreenLayoutProps,
 } from "../timer-screen-layout/TimerScreenLayout";
 import { TimerCommonProps } from "./Timer.types";
-import { useSharedValue } from "react-native-reanimated";
+import { useDerivedValue } from "react-native-reanimated";
 import { StageValue } from "@/features/stages/StageButton";
 import getActionValue from "./getActionValue";
+import useAnimationLoop from "@/hooks/useAnimationLoop";
 
 export type TimerProps = TimerCommonProps;
 
 const defaultWarningValue: StageValue = [0, 0, 4];
 const defaultAlertValue: StageValue = [0, 0, 5];
+
+function useTimerDuration(startedAt: number | null) {
+  const enabled = startedAt !== null;
+
+  const loop = useAnimationLoop(enabled);
+
+  const duration = useDerivedValue<number | null>(() => {
+    if (startedAt === null) return null;
+    const now = Date.now();
+
+    const secondsElapsed = Math.floor((now - startedAt) / 1000);
+
+    // loop.value is needed in here somewhere to ensure the derived value updates. But it's not
+    // actually needed for the calculation. See above comments
+    return loop.value ? secondsElapsed : secondsElapsed;
+  });
+
+  return duration;
+}
 
 export default React.memo(function Timer({
   ...props
@@ -34,7 +54,13 @@ export default React.memo(function Timer({
     [setActiveValue]
   );
 
-  const duration = useSharedValue<number | null>(0);
+  const onStart = React.useCallback(() => {
+    setStartedAt(Date.now());
+  }, []);
+
+  const [startedAt, setStartedAt] = React.useState<number | null>(null);
+
+  const duration = useTimerDuration(startedAt);
 
   return (
     <TimerScreenLayout
@@ -46,6 +72,7 @@ export default React.memo(function Timer({
       duration={duration}
       onNumberPadAction={onNumberPadAction}
       stageButtonVariant="duration"
+      onStart={onStart}
       {...props}
     />
   );
