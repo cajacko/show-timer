@@ -56,7 +56,7 @@ export default React.memo(function DurationTimer({
 }: DurationTimerProps): React.ReactNode {
   const [selectedStage, setSelectedStage] =
     React.useState<TimerScreenLayoutProps["selectedStage"]>("okay");
-  const [okayValue, setOkayValue] =
+  const [_okayValue, setOkayValue] =
     React.useState<StageValue>(defaultOkayValue);
   const [warningValue, setWarningValue] =
     React.useState<StageValue>(defaultWarningValue);
@@ -75,6 +75,14 @@ export default React.memo(function DurationTimer({
     }
     return _alertValue;
   }, [_alertValue]);
+
+  // The okay stage can not be empty
+  const okayValue = React.useMemo(() => {
+    if (_okayValue.length < 1) {
+      return [0];
+    }
+    return _okayValue;
+  }, [_okayValue]);
 
   const warningDuration = React.useMemo(
     () => stageValueToDuration(warningValue),
@@ -108,7 +116,7 @@ export default React.memo(function DurationTimer({
       setActiveValue((prevValue) => {
         const nextValue = getActionValue(prevValue, action, "duration");
 
-        if (selectedStage !== "alert") return nextValue;
+        if (selectedStage === "warning") return nextValue;
 
         // The alert stage can not be empty
         if (nextValue.length < 1) return [0];
@@ -159,7 +167,7 @@ export default React.memo(function DurationTimer({
       return ["backspace", "double-zero", 0];
     }
 
-    if (selectedStage !== "alert") return undefined;
+    if (selectedStage === "warning") return undefined;
 
     if (activeValue.length === 1 && activeValue[0] === 0) {
       return ["backspace", 0, "double-zero"];
