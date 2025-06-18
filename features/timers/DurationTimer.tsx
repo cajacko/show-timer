@@ -3,9 +3,16 @@ import TimerScreenLayout, {
   TimerScreenLayoutProps,
 } from "../timer-screen-layout/TimerScreenLayout";
 import { TimerCommonProps } from "./Timer.types";
-import { useSharedValue } from "react-native-reanimated";
+import {
+  SharedValue,
+  useDerivedValue,
+  useSharedValue,
+} from "react-native-reanimated";
 import { StageValue } from "@/features/stages/StageButton";
 import getActionValue from "@/features/timers/getActionValue";
+import { NumberButtonKey } from "@/features/number-pad/NumberPad";
+import useAnimationLoop from "@/hooks/useAnimationLoop";
+import stageValueToDuration from "@/utils/stageValueToDuration";
 
 export type DurationTimerProps = TimerCommonProps;
 
@@ -13,19 +20,58 @@ const defaultOkayValue: StageValue = [0, 0, 5];
 const defaultWarningValue: StageValue = [0, 0, 1];
 const defaultAlertValue: StageValue = [0];
 
+type State =
+  | { type: "running"; finishAt: number }
+  | { type: "paused"; secondsLeft: number }
+  | { type: "stopped" };
+
+function useTimerDuration(
+  state: State,
+  initDuration: SharedValue<number | null>
+) {
+  const enabled = state.type !== "stopped";
+
+  const loop = useAnimationLoop(enabled);
+
+  const duration = useDerivedValue<number | null>(() => {
+    if (state.type === "paused") return state.secondsLeft;
+    if (state.type === "stopped") return initDuration.value;
+
+    const now = Date.now();
+
+    // NOTE: We do display negative durations
+    const secondsLeft = Math.floor((state.finishAt - now) / 1000);
+
+    // loop.value is needed in here somewhere to ensure the derived value updates. But it's not
+    // actually needed for the calculation. See above comments
+    return loop.value ? secondsLeft : secondsLeft;
+  });
+
+  return duration;
+}
+
 export default React.memo(function DurationTimer({
   ...props
 }: DurationTimerProps): React.ReactNode {
   const [selectedStage, setSelectedStage] =
     React.useState<TimerScreenLayoutProps["selectedStage"]>("okay");
-
   const [okayValue, setOkayValue] =
     React.useState<StageValue>(defaultOkayValue);
-
   const [warningValue, setWarningValue] =
     React.useState<StageValue>(defaultWarningValue);
   const [_alertValue, setAlertValue] =
     React.useState<StageValue>(defaultAlertValue);
+  const [state, setState] = React.useState<State>({
+    type: "stopped",
+  });
+
+  const initDuration = useSharedValue<number | null>(
+    stageValueToDuration(okayValue)
+  );
+
+  React.useEffect(() => {
+    initDuration.value = stageValueToDuration(okayValue);
+  }, [okayValue, initDuration]);
 
   const setActiveValue =
     selectedStage === "warning"
@@ -52,7 +98,7 @@ export default React.memo(function DurationTimer({
     [setActiveValue, selectedStage]
   );
 
-  const duration = useSharedValue<number | null>(5 * 60);
+  const duration = useTimerDuration(state, initDuration);
 
   // The alert stage can not be empty
   const alertValue = React.useMemo(() => {
@@ -61,6 +107,52 @@ export default React.memo(function DurationTimer({
     }
     return _alertValue;
   }, [_alertValue]);
+
+  const activeValue =
+    selectedStage === "warning"
+      ? warningValue
+      : selectedStage === "okay"
+      ? okayValue
+      : alertValue;
+
+  const disabledButtons = React.useMemo((): NumberButtonKey[] | undefined => {
+    if (selectedStage !== "alert") return undefined;
+    if (activeValue.length === 1) return ["backspace"];
+  }, [activeValue, selectedStage]);
+
+  const start = React.useCallback(() => {
+    setState((prevState) => {
+      if (prevState.type === "running") return prevState;
+
+      if (prevState.type === "paused") {
+        return {
+          type: "running",
+          finishAt: Date.now() + prevState.secondsLeft * 1000, // Adjust start time based on paused duration
+        };
+      }
+
+      if (initDuration.value === null) {
+        return prevState;
+      }
+
+      return {
+        type: "running",
+        finishAt: Date.now() + initDuration.value * 1000,
+      };
+    });
+  }, [initDuration]);
+
+  const pause = React.useCallback(() => {
+    setState(
+      duration.value === null
+        ? { type: "stopped" }
+        : { type: "paused", secondsLeft: duration.value }
+    );
+  }, [duration]);
+
+  const reset = React.useCallback(() => {
+    setState({ type: "stopped" });
+  }, []);
 
   return (
     <TimerScreenLayout
@@ -73,6 +165,11 @@ export default React.memo(function DurationTimer({
       duration={duration}
       stageButtonVariant="duration"
       onNumberPadAction={onNumberPadAction}
+      disabledButtons={disabledButtons}
+      start={state.type !== "running" ? start : undefined}
+      pause={state.type === "running" ? pause : undefined}
+      reset={state.type !== "stopped" ? reset : undefined}
+      fullScreenButton={state.type === "running"}
       {...props}
     />
   );

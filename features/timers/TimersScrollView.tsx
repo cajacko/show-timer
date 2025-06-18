@@ -28,12 +28,13 @@ const timers: {
   name: string;
   description: string;
 }[] = [
-  { component: Timer, name: "Timer", description: "Count up from 0" },
   {
     component: DurationTimer,
     name: "Duration",
     description: "Count down from a set duration",
   },
+  { component: Timer, name: "Timer", description: "Count up from 0" },
+
   {
     component: ClockTimer,
     name: "Clock",
