@@ -7,6 +7,7 @@ import { TimerCommonProps } from "./Timer.types";
 import {
   cancelAnimation,
   Easing,
+  runOnJS,
   SharedValue,
   useDerivedValue,
   useSharedValue,
@@ -19,9 +20,11 @@ import { NumberButtonKey } from "@/features/number-pad/NumberPad";
 
 export type ClockTimerProps = TimerCommonProps;
 
-export function useClockDuration(
-  enabled: boolean = true
-): SharedValue<number | null> {
+export function useClockDuration(props?: {
+  enabled?: boolean;
+}): SharedValue<number | null> {
+  const enabled = props?.enabled ?? true;
+
   // Loop is only used to force the duration useDerivedValue to update and get calculate the value
   // based off the Date.now() and the endDate. This means we don't have ensure our withTiming call
   // is exactly right and still works when the user closes the app and reopens it. A timer only
@@ -65,6 +68,49 @@ export function useClockDuration(
   return duration;
 }
 
+function useIsClockDurationPastDate(
+  duration: SharedValue<number | null>,
+  date: string | null
+): SharedValue<boolean | null> {
+  const isPastDate = useDerivedValue(() => {
+    if (!date) return null;
+    if (duration.value === null) return null;
+
+    const dateTime = new Date(date).getTime();
+
+    // Get the now time from the clock duration. This is the opposite of the transform we do in
+    // useClockDuration to convert the 24-hour clock to seconds.
+    const now = new Date();
+    const hours = Math.floor(duration.value / 3600);
+    const minutes = Math.floor((duration.value % 3600) / 60);
+    const seconds = duration.value % 60;
+    now.setHours(hours, minutes, seconds, 0);
+
+    const isPastDate = now.getTime() > dateTime;
+
+    return isPastDate;
+  });
+
+  return isPastDate;
+}
+
+function stageValueToDate(value: StageValue): string | null {
+  if (value.length !== 6) return null;
+
+  const [sec2, sec1, min2, min1, hours2, hours1] = value;
+
+  const hours = parseInt(`${hours1}${hours2}`, 10);
+  const minutes = parseInt(`${min1}${min2}`, 10);
+  const seconds = parseInt(`${sec1}${sec2}`, 10);
+
+  if (isNaN(hours) || isNaN(minutes) || isNaN(seconds)) return null;
+
+  const now = new Date();
+  now.setHours(hours, minutes, seconds, 0);
+
+  return now.toISOString();
+}
+
 export default React.memo(function ClockTimer({
   fullScreenAmount,
   ...props
@@ -73,8 +119,33 @@ export default React.memo(function ClockTimer({
     React.useState<TimerScreenLayoutProps["selectedStage"]>("warning");
   const [warningValue, setWarningValue] = React.useState<StageValue>(nullValue);
   const [alertValue, setAlertValue] = React.useState<StageValue>(nullValue);
+  const [stage, setStage] =
+    React.useState<TimerScreenLayoutProps["stage"]>("okay");
 
   const duration = useClockDuration();
+
+  const warningDate = React.useMemo(
+    () => stageValueToDate(warningValue),
+    [warningValue]
+  );
+
+  const alertDate = React.useMemo(
+    () => stageValueToDate(alertValue),
+    [alertValue]
+  );
+
+  const isWarningPastDate = useIsClockDurationPastDate(duration, warningDate);
+  const isAlertPastDate = useIsClockDurationPastDate(duration, alertDate);
+
+  useDerivedValue(() => {
+    if (isAlertPastDate.value) {
+      runOnJS(setStage)("alert");
+    } else if (isWarningPastDate.value) {
+      runOnJS(setStage)("warning");
+    } else {
+      runOnJS(setStage)("okay");
+    }
+  });
 
   const setActiveValue =
     selectedStage === "warning" ? setWarningValue : setAlertValue;
@@ -111,7 +182,6 @@ export default React.memo(function ClockTimer({
     switch (activeValue.length) {
       case 0:
         return [3, 4, 5, 6, 7, 8, 9, "backspace"];
-      case 1:
       case 2:
       case 4:
         return [6, 7, 8, 9];
@@ -127,7 +197,7 @@ export default React.memo(function ClockTimer({
       duration={duration}
       warningValue={warningValue}
       alertValue={alertValue}
-      stage="okay"
+      stage={stage}
       selectedStage={selectedStage}
       onChangeSelectedStage={setSelectedStage}
       onNumberPadAction={onNumberPadAction}
