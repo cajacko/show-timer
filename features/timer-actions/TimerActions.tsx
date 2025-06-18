@@ -6,14 +6,23 @@ import {
   RefreshCcw,
 } from "@tamagui/lucide-icons";
 import React from "react";
+import Animated, {
+  SharedValue,
+  useAnimatedStyle,
+  useDerivedValue,
+} from "react-native-reanimated";
 import { View, ViewProps, Button } from "tamagui";
 
-export interface TimerActionsProps extends Omit<ViewProps, "start"> {
+const AnimatedButton = Animated.createAnimatedComponent(Button);
+
+export interface TimerActionsProps
+  extends Omit<ViewProps, "start" | "visibility"> {
   fullScreen?: () => void;
   start?: () => void;
   pause?: () => void;
   addMinute?: () => void;
   reset?: () => void;
+  visibility?: SharedValue<number>;
 }
 
 const mx = "$space.2";
@@ -24,12 +33,18 @@ export default React.memo(function TimerActions({
   pause,
   addMinute,
   reset,
+  visibility,
   ...props
 }: TimerActionsProps): React.ReactNode {
+  const style = useAnimatedStyle(() => ({
+    opacity: visibility ? visibility.value : 1,
+    transform: [{ scale: visibility ? visibility.value : 1 }],
+  }));
+
   return (
     <View flexDirection="row" {...props}>
       {fullScreen && (
-        <Button
+        <AnimatedButton
           icon={Maximize2}
           size="$5"
           onPress={fullScreen}
@@ -38,16 +53,44 @@ export default React.memo(function TimerActions({
         />
       )}
       {start && (
-        <Button icon={Play} size="$5" onPress={start} circular mx={mx} />
+        <AnimatedButton
+          icon={Play}
+          size="$5"
+          onPress={start}
+          circular
+          mx={mx}
+          style={style}
+        />
       )}
       {pause && (
-        <Button icon={Pause} size="$5" onPress={pause} circular mx={mx} />
+        <AnimatedButton
+          icon={Pause}
+          size="$5"
+          onPress={pause}
+          circular
+          mx={mx}
+          style={style}
+        />
       )}
       {addMinute && (
-        <Button icon={Plus} size="$5" onPress={addMinute} circular mx={mx} />
+        <AnimatedButton
+          icon={Plus}
+          size="$5"
+          onPress={addMinute}
+          circular
+          mx={mx}
+          style={style}
+        />
       )}
       {reset && (
-        <Button icon={RefreshCcw} size="$5" onPress={reset} circular mx={mx} />
+        <AnimatedButton
+          icon={RefreshCcw}
+          size="$5"
+          onPress={reset}
+          circular
+          mx={mx}
+          style={style}
+        />
       )}
     </View>
   );

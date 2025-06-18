@@ -160,6 +160,7 @@ export default React.memo(function Timer({
       fullScreenButton={state.type === "running"}
       disabledButtons={disabledButtons}
       paused={state.type === "paused"}
+      running={state.type === "running"}
       {...props}
     />
   );

@@ -9,7 +9,6 @@ import Animated, {
   withTiming,
   withRepeat,
   interpolateColor,
-  Easing,
 } from "react-native-reanimated";
 import { Button, useTheme, View, ViewProps } from "tamagui";
 import Countdown from "@/features/countdown/Countdown";
@@ -19,6 +18,9 @@ import { ChevronLeft, LockKeyhole, UnlockKeyhole } from "@tamagui/lucide-icons";
 import { Orientation, useOrientation } from "@/hooks/useOrientation";
 import { Platform } from "react-native";
 import Color from "color";
+import TimerActions, {
+  TimerActionsProps,
+} from "@/features/timer-actions/TimerActions";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 const AnimatedButton = Animated.createAnimatedComponent(Button);
@@ -28,7 +30,9 @@ const flashEnabled: boolean = true;
 const actionsDuration = 300;
 const showActionsDuration = 3000;
 
-export interface DisplayProps extends Omit<ViewProps, "height" | "width"> {
+export interface DisplayProps
+  extends Omit<ViewProps, "height" | "width" | "start">,
+    Pick<TimerActionsProps, "start" | "pause" | "reset" | "addMinute"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
   back: () => void;
@@ -39,6 +43,7 @@ export interface DisplayProps extends Omit<ViewProps, "height" | "width"> {
   duration: SharedValue<number | null>;
   fullScreenAmount: SharedValue<number>;
   flash?: boolean;
+  running: boolean;
 }
 
 export default React.memo(function Display({
@@ -52,6 +57,11 @@ export default React.memo(function Display({
   duration: durationProp,
   fullScreenAmount,
   flash: flashProp = false,
+  start,
+  pause,
+  reset,
+  addMinute,
+  running,
   ...props
 }: DisplayProps): React.ReactNode {
   const flash: boolean = flashEnabled && flashProp;
@@ -93,8 +103,9 @@ export default React.memo(function Display({
   }, [_orientation, _lockVisibility]);
 
   const actionsVisibility = useDerivedValue(() => {
-    if (_actionsVisibility.value === 0) return 0;
+    if (_actionsVisibility.value === 0 && running) return 0;
     if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
+    if (!running) return 1;
 
     return _actionsVisibility.value;
   });
@@ -379,6 +390,13 @@ export default React.memo(function Display({
             opacity={showText ? 1 : 0.2}
           />
         </AnimatedView>
+        <TimerActions
+          start={start}
+          pause={pause}
+          addMinute={addMinute}
+          reset={reset}
+          visibility={actionsVisibility}
+        />
       </View>
       <GestureDetector gesture={gesture}>
         <View position="absolute" t={0} l={0} r={0} b={0} z={1} />

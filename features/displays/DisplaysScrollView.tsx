@@ -36,12 +36,20 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 
 export interface DisplaysScrollViewProps
   extends Omit<ViewProps, "height" | "width" | "start" | "rotate" | "onPress">,
-    Pick<DisplayProps, "onPress" | "flash"> {
+    Pick<
+      DisplayProps,
+      | "onPress"
+      | "flash"
+      | "pause"
+      | "reset"
+      | "addMinute"
+      | "start"
+      | "running"
+    > {
   height: SharedValue<number>;
   width: SharedValue<number>;
   duration: SharedValue<number | null>;
   stage: Stage;
-  start?: () => void;
   goBack: () => void;
   fullScreenAmount: SharedValue<number>;
 }
@@ -56,6 +64,10 @@ export default React.memo(function DisplaysScrollView({
   fullScreenAmount,
   onPress,
   flash = false,
+  pause,
+  reset,
+  addMinute,
+  running,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
   const enableScrollSharedValue = useDerivedValue<boolean>(
@@ -130,6 +142,11 @@ export default React.memo(function DisplaysScrollView({
               onPress={onPress}
               fullScreenAmount={fullScreenAmount}
               flash={flash}
+              start={start}
+              pause={pause}
+              reset={reset}
+              addMinute={addMinute}
+              running={running}
               {...componentProps}
             />
           </Page>

@@ -2,5 +2,5 @@ import { TimerScreenLayoutProps } from "../timer-screen-layout/TimerScreenLayout
 
 export type TimerCommonProps = Omit<
   TimerScreenLayoutProps,
-  "duration" | "stage"
+  "duration" | "stage" | "running"
 >;

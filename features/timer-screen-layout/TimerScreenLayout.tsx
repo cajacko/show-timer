@@ -22,7 +22,7 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 export interface TimerScreenLayoutProps
   extends Pick<StageSelectorProps, "okayValue" | "warningValue" | "alertValue">,
     Omit<ViewProps, "height" | "width" | "start">,
-    Pick<DisplaysScrollViewProps, "duration" | "stage"> {
+    Pick<DisplaysScrollViewProps, "duration" | "stage" | "running"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
   selectedStage?: Stage;
@@ -74,6 +74,7 @@ export default React.memo(function TimerScreenLayout({
   reset,
   addMinute,
   paused = false,
+  running,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
@@ -152,6 +153,11 @@ export default React.memo(function TimerScreenLayout({
           z={1}
           onPress={onPressDisplay}
           flash={paused}
+          start={start}
+          pause={pause}
+          reset={reset}
+          addMinute={addMinute}
+          running={running}
         />
         <AnimatedView
           position="absolute"

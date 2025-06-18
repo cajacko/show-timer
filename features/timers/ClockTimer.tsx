@@ -179,6 +179,7 @@ export default React.memo(function ClockTimer({
       fullScreenAmount={fullScreenAmount}
       disabledButtons={disabledButtons}
       fullScreenButton
+      running
       {...props}
     />
   );
