@@ -189,6 +189,19 @@ export default React.memo(function DurationTimer({
     setState({ type: "stopped" });
   }, []);
 
+  const addMinute = React.useCallback(() => {
+    setState((prevState) => {
+      if (prevState.type === "running") {
+        return {
+          type: "running",
+          finishAt: prevState.finishAt + 60 * 1000,
+        };
+      }
+
+      return prevState;
+    });
+  }, []);
+
   return (
     <TimerScreenLayout
       okayValue={okayValue}
@@ -204,6 +217,7 @@ export default React.memo(function DurationTimer({
       start={state.type !== "running" ? start : undefined}
       pause={state.type === "running" ? pause : undefined}
       reset={state.type !== "stopped" ? reset : undefined}
+      addMinute={state.type === "running" ? addMinute : undefined}
       fullScreenButton={state.type === "running"}
       {...props}
     />
