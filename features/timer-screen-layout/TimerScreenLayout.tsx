@@ -11,17 +11,17 @@ import Animated, {
   withTiming,
   SharedValue,
 } from "react-native-reanimated";
-import { Button, SizableText, View, ViewProps } from "tamagui";
+import { SizableText, View, ViewProps } from "tamagui";
 import DisplaysScrollView, {
   DisplaysScrollViewProps,
 } from "@/features/displays/DisplaysScrollView";
 import stageColors from "@/features/stages/stageColors";
-import { Play } from "@tamagui/lucide-icons";
+import TimerActions from "@/features/timer-actions/TimerActions";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 export interface TimerScreenLayoutProps
   extends Pick<StageSelectorProps, "okayValue" | "warningValue" | "alertValue">,
-    Omit<ViewProps, "height" | "width">,
+    Omit<ViewProps, "height" | "width" | "start">,
     Pick<DisplaysScrollViewProps, "duration" | "stage"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
@@ -39,7 +39,11 @@ export interface TimerScreenLayoutProps
   description: string;
   footerHeight: number;
   footerPb?: number;
-  onStart?: () => void;
+  start?: () => void;
+  pause?: () => void;
+  reset?: () => void;
+  addMinute?: () => void;
+  fullScreenButton?: boolean;
 }
 
 export const fullScreenDuration = 300;
@@ -63,7 +67,11 @@ export default React.memo(function TimerScreenLayout({
   footerPb,
   onPressDisplay,
   disabledButtons,
-  onStart,
+  start: startProp,
+  fullScreenButton,
+  pause,
+  reset,
+  addMinute,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
@@ -91,20 +99,27 @@ export default React.memo(function TimerScreenLayout({
 
   const stageColor = selectedStage ? stageColors[selectedStage] : undefined;
 
-  const fullScreen = React.useRef<boolean>(false);
+  const fullScreenRef = React.useRef<boolean>(false);
 
-  const start = React.useCallback(() => {
-    onStart?.();
-
-    fullScreen.current = true;
+  const fullScreen = React.useCallback(() => {
+    fullScreenRef.current = true;
 
     fullScreenAmount.value = withTiming(1, {
       duration: fullScreenDuration,
     });
-  }, [fullScreenAmount, onStart]);
+  }, [fullScreenAmount]);
+
+  const start = React.useMemo(() => {
+    if (!startProp) return undefined;
+
+    return () => {
+      startProp();
+      fullScreen();
+    };
+  }, [fullScreen, startProp]);
 
   const goBack = React.useCallback(() => {
-    fullScreen.current = false;
+    fullScreenRef.current = false;
 
     fullScreenAmount.value = withTiming(0, {
       duration: fullScreenDuration,
@@ -147,11 +162,12 @@ export default React.memo(function TimerScreenLayout({
           justify="flex-end"
           style={startStyle}
         >
-          <Button
-            icon={Play}
-            size="$5"
-            onPress={start}
-            circular
+          <TimerActions
+            start={start}
+            fullScreen={fullScreenButton ? fullScreen : undefined}
+            pause={pause}
+            reset={reset}
+            addMinute={addMinute}
             mb="$space.6"
           />
         </AnimatedView>

@@ -14,16 +14,23 @@ export type TimerProps = TimerCommonProps;
 const defaultWarningValue: StageValue = [0, 0, 4];
 const defaultAlertValue: StageValue = [0, 0, 5];
 
-function useTimerDuration(startedAt: number | null) {
-  const enabled = startedAt !== null;
+type State =
+  | { type: "running"; startedAt: number }
+  | { type: "paused"; duration: number }
+  | { type: "stopped" };
+
+function useTimerDuration(state: State) {
+  const enabled = state.type !== "stopped";
 
   const loop = useAnimationLoop(enabled);
 
   const duration = useDerivedValue<number | null>(() => {
-    if (startedAt === null) return null;
+    if (state.type === "stopped") return null;
+    if (state.type === "paused") return state.duration;
+
     const now = Date.now();
 
-    const secondsElapsed = Math.floor((now - startedAt) / 1000);
+    const secondsElapsed = Math.floor((now - state.startedAt) / 1000);
 
     // loop.value is needed in here somewhere to ensure the derived value updates. But it's not
     // actually needed for the calculation. See above comments
@@ -44,6 +51,10 @@ export default React.memo(function Timer({
     React.useState<StageValue>(defaultAlertValue);
   const [stage, setStage] =
     React.useState<TimerScreenLayoutProps["stage"]>("okay");
+
+  const [state, setState] = React.useState<State>({
+    type: "stopped",
+  });
 
   const warningDuration = React.useMemo(
     () => stageValueToDuration(warningValue),
@@ -67,13 +78,22 @@ export default React.memo(function Timer({
     [setActiveValue]
   );
 
-  const onStart = React.useCallback(() => {
-    setStartedAt(Date.now());
+  const start = React.useCallback(() => {
+    setState((prevState) => {
+      if (prevState.type === "running") return prevState;
+
+      if (prevState.type === "paused") {
+        return {
+          type: "running",
+          startedAt: Date.now() - prevState.duration * 1000, // Adjust start time based on paused duration
+        };
+      }
+
+      return { type: "running", startedAt: Date.now() };
+    });
   }, []);
 
-  const [startedAt, setStartedAt] = React.useState<number | null>(null);
-
-  const duration = useTimerDuration(startedAt);
+  const duration = useTimerDuration(state);
 
   const isAlertPastDate = useDerivedValue(() => {
     if (duration.value === null || alertDuration === null) return false;
@@ -95,6 +115,18 @@ export default React.memo(function Timer({
     }
   });
 
+  const reset = React.useCallback(() => {
+    setState({ type: "stopped" });
+  }, []);
+
+  const pause = React.useCallback(() => {
+    setState(
+      duration.value === null
+        ? { type: "stopped" }
+        : { type: "paused", duration: duration.value }
+    );
+  }, [duration]);
+
   return (
     <TimerScreenLayout
       warningValue={warningValue}
@@ -105,7 +137,10 @@ export default React.memo(function Timer({
       duration={duration}
       onNumberPadAction={onNumberPadAction}
       stageButtonVariant="duration"
-      onStart={onStart}
+      start={state.type !== "running" ? start : undefined}
+      reset={state.type !== "stopped" ? reset : undefined}
+      pause={state.type === "running" ? pause : undefined}
+      fullScreenButton={state.type === "running"}
       {...props}
     />
   );
