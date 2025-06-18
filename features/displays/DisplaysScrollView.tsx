@@ -13,11 +13,9 @@ import {
   ScrollView,
   usePaginationControls,
 } from "@/features/pagination/usePagination";
-import { TimerState } from "@/features-2/timers/types";
 import Indicators from "@/features/pagination/Indicators";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import { Stage } from "@/features/stages/Stage.types";
-import { Orientation } from "@/hooks/useOrientation";
 
 const displays: {
   component: React.NamedExoticComponent<DisplayProps>;
@@ -71,16 +69,9 @@ export default React.memo(function DisplaysScrollView({
   onPress,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
-  const _rotation = useSharedValue(0);
-
-  const [lockedOrientation, lockOrientation] =
-    React.useState<Orientation | null>(null);
-
   const enableScrollSharedValue = useDerivedValue<boolean>(
     () => fullScreenAmount.value === 0
   );
-
-  const state = useSharedValue<TimerState>({ type: "stopped" });
 
   const leftChevronStyle = useAnimatedStyle(() => {
     return {
