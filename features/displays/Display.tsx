@@ -380,9 +380,9 @@ export default React.memo(function Display({
         style={{
           backgroundColor: colorVariant === "border" ? "black" : "transparent",
         }}
-        pointerEvents="none"
+        pointerEvents="box-none"
       >
-        <AnimatedView style={countdownStyle}>
+        <AnimatedView style={countdownStyle} pointerEvents="none">
           <Countdown
             duration={duration}
             color={textColorAnimation}
