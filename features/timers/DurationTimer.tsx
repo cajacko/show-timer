@@ -4,6 +4,7 @@ import TimerScreenLayout, {
 } from "../timer-screen-layout/TimerScreenLayout";
 import { TimerCommonProps } from "./Timer.types";
 import {
+  runOnJS,
   SharedValue,
   useDerivedValue,
   useSharedValue,
@@ -64,6 +65,26 @@ export default React.memo(function DurationTimer({
   const [state, setState] = React.useState<State>({
     type: "stopped",
   });
+  const [stage, setStage] =
+    React.useState<TimerScreenLayoutProps["stage"]>("okay");
+
+  // The alert stage can not be empty
+  const alertValue = React.useMemo(() => {
+    if (_alertValue.length < 1) {
+      return [0];
+    }
+    return _alertValue;
+  }, [_alertValue]);
+
+  const warningDuration = React.useMemo(
+    () => stageValueToDuration(warningValue),
+    [warningValue]
+  );
+
+  const alertDuration = React.useMemo(
+    () => stageValueToDuration(alertValue),
+    [alertValue]
+  );
 
   const initDuration = useSharedValue<number | null>(
     stageValueToDuration(okayValue)
@@ -100,13 +121,27 @@ export default React.memo(function DurationTimer({
 
   const duration = useTimerDuration(state, initDuration);
 
-  // The alert stage can not be empty
-  const alertValue = React.useMemo(() => {
-    if (_alertValue.length < 1) {
-      return [0];
+  const isDurationPastAlert = useDerivedValue(() => {
+    if (duration.value === null || alertDuration === null) return false;
+
+    return duration.value <= alertDuration;
+  });
+
+  const isDurationPastWarning = useDerivedValue(() => {
+    if (duration.value === null || warningDuration === null) return false;
+
+    return duration.value <= warningDuration;
+  });
+
+  useDerivedValue(() => {
+    if (isDurationPastAlert.value) {
+      runOnJS(setStage)("alert");
+    } else if (isDurationPastWarning.value) {
+      runOnJS(setStage)("warning");
+    } else {
+      runOnJS(setStage)("okay");
     }
-    return _alertValue;
-  }, [_alertValue]);
+  });
 
   const activeValue =
     selectedStage === "warning"
@@ -159,7 +194,7 @@ export default React.memo(function DurationTimer({
       okayValue={okayValue}
       warningValue={warningValue}
       alertValue={alertValue}
-      stage="okay"
+      stage={stage}
       selectedStage={selectedStage}
       onChangeSelectedStage={setSelectedStage}
       duration={duration}

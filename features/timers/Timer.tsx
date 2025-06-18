@@ -95,20 +95,20 @@ export default React.memo(function Timer({
 
   const duration = useTimerDuration(state);
 
-  const isAlertPastDate = useDerivedValue(() => {
+  const isDurationPastAlert = useDerivedValue(() => {
     if (duration.value === null || alertDuration === null) return false;
     return duration.value >= alertDuration;
   });
 
-  const isWarningPastDate = useDerivedValue(() => {
+  const isDurationPastWarning = useDerivedValue(() => {
     if (duration.value === null || warningDuration === null) return false;
     return duration.value >= warningDuration;
   });
 
   useDerivedValue(() => {
-    if (isAlertPastDate.value) {
+    if (isDurationPastAlert.value) {
       runOnJS(setStage)("alert");
-    } else if (isWarningPastDate.value) {
+    } else if (isDurationPastWarning.value) {
       runOnJS(setStage)("warning");
     } else {
       runOnJS(setStage)("okay");
