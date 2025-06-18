@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "fun.playface.showtimer"
     },
     "web": {
       "bundler": "metro",
@@ -45,6 +46,12 @@
         "projectId": "947f1713-f662-4f1e-8c56-983d89b6ea28"
       }
     },
-    "owner": "charliejackson"
+    "owner": "charliejackson",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/947f1713-f662-4f1e-8c56-983d89b6ea28"
+    }
   }
 }
