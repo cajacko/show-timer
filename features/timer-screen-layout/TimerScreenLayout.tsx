@@ -44,6 +44,7 @@ export interface TimerScreenLayoutProps
   reset?: () => void;
   addMinute?: () => void;
   fullScreenButton?: boolean;
+  paused?: boolean;
 }
 
 export const fullScreenDuration = 300;
@@ -72,6 +73,7 @@ export default React.memo(function TimerScreenLayout({
   pause,
   reset,
   addMinute,
+  paused = false,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
@@ -149,6 +151,7 @@ export default React.memo(function TimerScreenLayout({
           goBack={goBack}
           z={1}
           onPress={onPressDisplay}
+          flash={paused}
         />
         <AnimatedView
           position="absolute"

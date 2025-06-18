@@ -17,30 +17,18 @@ import Indicators from "@/features/pagination/Indicators";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import { Stage } from "@/features/stages/Stage.types";
 
-const displays: {
-  component: React.NamedExoticComponent<DisplayProps>;
-  props: Partial<DisplayProps>;
-}[] = [
+const displays: Partial<DisplayProps>[] = [
   {
-    component: Display,
-    props: {
-      colorVariant: "border",
-      showText: true,
-    },
+    colorVariant: "border",
+    showText: true,
   },
   {
-    component: Display,
-    props: {
-      colorVariant: "background",
-      showText: true,
-    },
+    colorVariant: "background",
+    showText: true,
   },
   {
-    component: Display,
-    props: {
-      colorVariant: "background",
-      showText: false,
-    },
+    colorVariant: "background",
+    showText: false,
   },
 ];
 
@@ -48,7 +36,7 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 
 export interface DisplaysScrollViewProps
   extends Omit<ViewProps, "height" | "width" | "start" | "rotate" | "onPress">,
-    Pick<DisplayProps, "onPress"> {
+    Pick<DisplayProps, "onPress" | "flash"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
   duration: SharedValue<number | null>;
@@ -67,6 +55,7 @@ export default React.memo(function DisplaysScrollView({
   goBack,
   fullScreenAmount,
   onPress,
+  flash = false,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
   const enableScrollSharedValue = useDerivedValue<boolean>(
@@ -130,9 +119,9 @@ export default React.memo(function DisplaysScrollView({
         scrollXOffset={scrollXOffset}
         enableScrollSharedValue={enableScrollSharedValue}
       >
-        {displays.map(({ component: Component, props: componentProps }, i) => (
+        {displays.map((componentProps, i) => (
           <Page key={i} pageWidth={pageWidth}>
-            <Component
+            <Display
               stage={stage}
               height={height}
               width={width}
@@ -140,6 +129,7 @@ export default React.memo(function DisplaysScrollView({
               back={goBack}
               onPress={onPress}
               fullScreenAmount={fullScreenAmount}
+              flash={flash}
               {...componentProps}
             />
           </Page>

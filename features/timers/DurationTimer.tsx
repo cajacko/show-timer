@@ -240,6 +240,7 @@ export default React.memo(function DurationTimer({
       reset={state.type !== "stopped" ? reset : undefined}
       addMinute={state.type === "running" ? addMinute : undefined}
       fullScreenButton={state.type === "running"}
+      paused={state.type === "paused"}
       {...props}
     />
   );

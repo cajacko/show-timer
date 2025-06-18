@@ -7,6 +7,9 @@ import Animated, {
   useDerivedValue,
   useSharedValue,
   withTiming,
+  withRepeat,
+  interpolateColor,
+  Easing,
 } from "react-native-reanimated";
 import { Button, useTheme, View, ViewProps } from "tamagui";
 import Countdown from "@/features/countdown/Countdown";
@@ -15,9 +18,15 @@ import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { ChevronLeft, LockKeyhole, UnlockKeyhole } from "@tamagui/lucide-icons";
 import { Orientation, useOrientation } from "@/hooks/useOrientation";
 import { Platform } from "react-native";
+import Color from "color";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 const AnimatedButton = Animated.createAnimatedComponent(Button);
+
+const flashAlpha = 0.25;
+const flashEnabled: boolean = true;
+const actionsDuration = 300;
+const showActionsDuration = 3000;
 
 export interface DisplayProps extends Omit<ViewProps, "height" | "width"> {
   height: SharedValue<number>;
@@ -29,13 +38,8 @@ export interface DisplayProps extends Omit<ViewProps, "height" | "width"> {
   onPress?: () => { handled: boolean };
   duration: SharedValue<number | null>;
   fullScreenAmount: SharedValue<number>;
-  // pause?: () => void;
-  // resume?: () => void;
-  // reset?: () => void;
+  flash?: boolean;
 }
-
-const actionsDuration = 300;
-const showActionsDuration = 3000;
 
 export default React.memo(function Display({
   height,
@@ -47,8 +51,11 @@ export default React.memo(function Display({
   onPress,
   duration: durationProp,
   fullScreenAmount,
+  flash: flashProp = false,
   ...props
 }: DisplayProps): React.ReactNode {
+  const flash: boolean = flashEnabled && flashProp;
+  const flashOpacity = useSharedValue(1);
   const _actionsVisibility = useSharedValue<number>(0);
   const _lockVisibility = useSharedValue<number>(0);
   const _orientation = useOrientation();
@@ -60,6 +67,18 @@ export default React.memo(function Display({
   const hideLockTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
+
+  React.useEffect(() => {
+    if (flash) {
+      flashOpacity.value = withRepeat(
+        withTiming(0, { duration: 800 }),
+        -1,
+        true
+      );
+    } else {
+      flashOpacity.value = withTiming(1, { duration: 200 });
+    }
+  }, [flash, flashOpacity]);
 
   React.useEffect(() => {
     _lockVisibility.value = withTiming(1, {
@@ -140,11 +159,27 @@ export default React.memo(function Display({
   const theme = useTheme();
   const backgroundColor = theme[stageColors[stage]]?.val;
 
+  const backgroundColorFlash = React.useMemo(
+    () => Color(backgroundColor).alpha(flashAlpha).toString(),
+    [backgroundColor]
+  );
+
+  const textColor = "white";
+
+  const textFlashColor = React.useMemo(
+    () => Color(textColor).alpha(flashAlpha).toString(),
+    [textColor]
+  );
+
   const animatedStyle = useAnimatedStyle(() => ({
     height: height.value,
     width: width.value,
     padding: colorVariant === "border" ? Math.round(width.value * 0.03) : 0,
-    backgroundColor,
+    backgroundColor: interpolateColor(
+      flashOpacity.value,
+      [0, 1],
+      [backgroundColorFlash, backgroundColor]
+    ),
   }));
 
   const fontSize = useDerivedValue(() => {
@@ -158,8 +193,12 @@ export default React.memo(function Display({
     return Math.round(width.value * 0.2);
   });
 
-  const textColor = useDerivedValue(() => {
-    return "white";
+  const textColorAnimation = useDerivedValue(() => {
+    return interpolateColor(
+      flashOpacity.value,
+      [0, 1],
+      [textFlashColor, textColor]
+    );
   });
 
   const onTap = React.useCallback(() => {
@@ -335,7 +374,7 @@ export default React.memo(function Display({
         <AnimatedView style={countdownStyle}>
           <Countdown
             duration={duration}
-            color={textColor}
+            color={textColorAnimation}
             fontSize={fontSize}
             opacity={showText ? 1 : 0.2}
           />

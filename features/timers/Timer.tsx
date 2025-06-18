@@ -159,6 +159,7 @@ export default React.memo(function Timer({
       pause={state.type === "running" ? pause : undefined}
       fullScreenButton={state.type === "running"}
       disabledButtons={disabledButtons}
+      paused={state.type === "paused"}
       {...props}
     />
   );
