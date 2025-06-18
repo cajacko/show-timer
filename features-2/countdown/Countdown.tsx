@@ -5,7 +5,7 @@ import {
   useSharedValue,
 } from "react-native-reanimated";
 import { View } from "tamagui";
-import AnimatedColon from "./AnimatedColon";
+import AnimatedSymbol from "./AnimatedSymbol";
 import AnimatedNumbers from "./AnimatedNumbers";
 
 export interface CountdownProps {
@@ -24,10 +24,22 @@ export default React.memo(function Countdown({
   fontSize,
   opacity,
 }: CountdownProps): React.ReactNode {
-  const days = useDerivedValue<number | null>(() => {
+  const isNegative = useDerivedValue<boolean>(() => {
+    if (duration.value === null) return false;
+
+    return duration.value < 0;
+  });
+
+  const durationAbs = useDerivedValue<number | null>(() => {
     if (duration.value === null) return null;
 
-    const days = Math.floor(duration.value / 86400);
+    return Math.abs(duration.value);
+  });
+
+  const days = useDerivedValue<number | null>(() => {
+    if (durationAbs.value === null) return null;
+
+    const days = Math.floor(durationAbs.value / 86400);
 
     if (days === 0) return null;
 
@@ -37,9 +49,9 @@ export default React.memo(function Countdown({
   const leadingZeroesDays = useSharedValue<boolean>(false);
 
   const hours = useDerivedValue<number | null>(() => {
-    if (duration.value === null) return null;
+    if (durationAbs.value === null) return null;
 
-    const hours = Math.floor(duration.value / 3600);
+    const hours = Math.floor(durationAbs.value / 3600);
 
     if (hours === 0) return null;
 
@@ -51,9 +63,9 @@ export default React.memo(function Countdown({
   );
 
   const minutes = useDerivedValue<number | null>(() => {
-    if (duration.value === null) return null;
+    if (durationAbs.value === null) return null;
 
-    const minutes = Math.floor((duration.value % 3600) / 60);
+    const minutes = Math.floor((durationAbs.value % 3600) / 60);
 
     if (minutes === 0) {
       return hours.value === null ? null : 0;
@@ -67,9 +79,9 @@ export default React.memo(function Countdown({
   );
 
   const seconds = useDerivedValue<number | null>(() => {
-    if (duration.value === null) return null;
+    if (durationAbs.value === null) return null;
 
-    const seconds = Math.floor(duration.value % 60);
+    const seconds = Math.floor(durationAbs.value % 60);
 
     return seconds;
   });
@@ -82,6 +94,12 @@ export default React.memo(function Countdown({
 
   return (
     <View flexDirection="row" opacity={opacity}>
+      <AnimatedSymbol
+        color={color}
+        fontSize={fontSize}
+        visible={isNegative}
+        symbol="-"
+      />
       <AnimatedNumbers
         value={days}
         color={color}
@@ -89,10 +107,11 @@ export default React.memo(function Countdown({
         maxDigits={2}
         leadingZeroes={leadingZeroesDays}
       />
-      <AnimatedColon
+      <AnimatedSymbol
         color={color}
         fontSize={fontSize}
         visible={leadingZeroesHours}
+        symbol=":"
       />
       <AnimatedNumbers
         value={hours}
@@ -101,10 +120,11 @@ export default React.memo(function Countdown({
         maxDigits={2}
         leadingZeroes={leadingZeroesHours}
       />
-      <AnimatedColon
+      <AnimatedSymbol
         color={color}
         fontSize={fontSize}
         visible={leadingZeroesMinutes}
+        symbol=":"
       />
       <AnimatedNumbers
         value={minutes}
@@ -113,10 +133,11 @@ export default React.memo(function Countdown({
         maxDigits={2}
         leadingZeroes={leadingZeroesMinutes}
       />
-      <AnimatedColon
+      <AnimatedSymbol
         color={color}
         fontSize={fontSize}
         visible={leadingZeroesSeconds}
+        symbol=":"
       />
       <AnimatedNumbers
         value={seconds}
