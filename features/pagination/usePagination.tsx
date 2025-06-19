@@ -13,8 +13,8 @@ import { GestureDetector, Gesture } from "react-native-gesture-handler";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-const underScrollPercentage = 0.33; // Percentage of the page width to allow under-scrolling
-const fastEnoughVelocity = 2500; // Arbitrary threshold for "fast enough" scrolling
+const underScrollPercentage = 0.2; // Percentage of the page width to allow under-scrolling
+const fastEnoughVelocity = 2000; // Arbitrary threshold for "fast enough" scrolling
 
 export type ScrollState = "animating" | "scrolling" | "idle";
 
