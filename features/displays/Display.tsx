@@ -11,7 +11,7 @@ import Animated, {
   interpolateColor,
 } from "react-native-reanimated";
 import { Button, useTheme, View, ViewProps } from "tamagui";
-import Countdown from "@/features/countdown/Countdown";
+import Countdown, { CountdownProps } from "@/features/countdown/Countdown";
 import stageColors from "@/features/stages/stageColors";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { ChevronLeft, LockKeyhole, UnlockKeyhole } from "@tamagui/lucide-icons";
@@ -33,7 +33,8 @@ const showActionsDuration = 3000;
 
 export interface DisplayProps
   extends Omit<ViewProps, "height" | "width" | "start">,
-    Pick<TimerActionsProps, "start" | "pause" | "reset" | "addMinute"> {
+    Pick<TimerActionsProps, "start" | "pause" | "reset" | "addMinute">,
+    Pick<CountdownProps, "type"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
   back: () => void;
@@ -63,6 +64,7 @@ export default React.memo(function Display({
   reset,
   addMinute,
   running,
+  type,
   ...props
 }: DisplayProps): React.ReactNode {
   const flash: boolean = flashEnabled && flashProp;
@@ -394,6 +396,7 @@ export default React.memo(function Display({
             color={textColorAnimation}
             fontSize={fontSize}
             opacity={showText ? 1 : 0.2}
+            type={type}
           />
         </AnimatedView>
         <TimerActions

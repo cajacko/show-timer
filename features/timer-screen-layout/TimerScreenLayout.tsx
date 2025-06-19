@@ -28,7 +28,7 @@ export interface TimerScreenLayoutProps
   selectedStage?: Stage;
   onChangeSelectedStage?: StageSelectorProps["onChange"];
   onNumberPadAction?: NumberPadProps["onAction"];
-  stageButtonVariant?: StageSelectorProps["variant"];
+  stageButtonVariant: StageSelectorProps["variant"];
   onPressDisplay?: DisplaysScrollViewProps["onPress"];
   disabledButtons?: NumberPadProps["disabledButtons"];
   /**
@@ -158,6 +158,7 @@ export default React.memo(function TimerScreenLayout({
           reset={reset}
           addMinute={addMinute}
           running={running}
+          type={stageButtonVariant}
         />
         <AnimatedView
           position="absolute"

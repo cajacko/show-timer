@@ -46,6 +46,7 @@ export interface DisplaysScrollViewProps
       | "addMinute"
       | "start"
       | "running"
+      | "type"
     > {
   height: SharedValue<number>;
   width: SharedValue<number>;
@@ -69,9 +70,10 @@ export default React.memo(function DisplaysScrollView({
   reset,
   addMinute,
   running,
+  type,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
-  const { buttonSize, height: actionsHeight } = useTimerActionSize();
+  const { buttonSize } = useTimerActionSize();
 
   const enableScrollSharedValue = useDerivedValue<boolean>(
     () => fullScreenAmount.value === 0
@@ -150,6 +152,7 @@ export default React.memo(function DisplaysScrollView({
               reset={reset}
               addMinute={addMinute}
               running={running}
+              type={type}
               {...componentProps}
             />
           </Page>

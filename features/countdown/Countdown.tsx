@@ -16,6 +16,7 @@ export interface CountdownProps {
   color: DerivedValue<string>;
   fontSize: DerivedValue<number>;
   opacity?: number;
+  type: "time" | "duration";
 }
 
 export default React.memo(function Countdown({
@@ -23,6 +24,7 @@ export default React.memo(function Countdown({
   duration,
   fontSize,
   opacity,
+  type,
 }: CountdownProps): React.ReactNode {
   const isNegative = useDerivedValue<boolean>(() => {
     if (duration.value === null) return false;
@@ -37,6 +39,7 @@ export default React.memo(function Countdown({
   });
 
   const days = useDerivedValue<number | null>(() => {
+    if (type === "time") return null;
     if (durationAbs.value === null) return null;
 
     const days = Math.floor(durationAbs.value / 86400);
@@ -53,30 +56,37 @@ export default React.memo(function Countdown({
 
     const hours = Math.floor(durationAbs.value / 3600);
 
-    if (hours === 0) return null;
+    if (hours === 0 && type !== "time" && days.value === null) {
+      return null;
+    }
 
     return hours;
   });
 
-  const leadingZeroesHours = useDerivedValue<boolean>(
-    () => days.value !== null
-  );
+  const leadingZeroesHours = useDerivedValue<boolean>(() => {
+    if (type === "time") return true;
+
+    return days.value !== null;
+  });
 
   const minutes = useDerivedValue<number | null>(() => {
     if (durationAbs.value === null) return null;
 
     const minutes = Math.floor((durationAbs.value % 3600) / 60);
 
-    if (minutes === 0) {
-      return hours.value === null ? null : 0;
+    if (minutes === 0 && type !== "time" && hours.value === null) {
+      return null;
     }
 
     return minutes;
   });
 
-  const leadingZeroesMinutes = useDerivedValue<boolean>(
-    () => hours.value !== null || days.value !== null
-  );
+  const leadingZeroesMinutes = useDerivedValue<boolean>(() => {
+    if (type === "time") return true;
+    if (hours.value !== null) return true;
+
+    return days.value !== null;
+  });
 
   const seconds = useDerivedValue<number | null>(() => {
     if (durationAbs.value === null) return null;
@@ -87,10 +97,14 @@ export default React.memo(function Countdown({
   });
 
   const leadingZeroesSeconds = useDerivedValue<boolean>(() => {
-    return (
-      minutes.value !== null || hours.value !== null || days.value !== null
-    );
+    if (type === "time") return true;
+    if (minutes.value !== null) return true;
+    if (hours.value !== null) return true;
+
+    return days.value !== null;
   });
+
+  const hasDays = useDerivedValue<boolean>(() => days.value !== null);
 
   return (
     <View flexDirection="row" opacity={opacity}>
@@ -110,7 +124,7 @@ export default React.memo(function Countdown({
       <AnimatedSymbol
         color={color}
         fontSize={fontSize}
-        visible={leadingZeroesHours}
+        visible={hasDays}
         symbol=":"
       />
       <AnimatedNumbers

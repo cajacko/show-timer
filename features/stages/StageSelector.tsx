@@ -21,7 +21,7 @@ export interface StageSelectorProps extends ViewProps {
   activePosition?: "top" | "bottom";
   active?: Stage;
   onChange?: (stage: Stage) => void;
-  variant?: StageButtonVariant;
+  variant: StageButtonVariant;
 }
 
 const spacing = "$space.1";

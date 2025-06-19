@@ -174,7 +174,7 @@ export default React.memo(function ClockTimer({
       selectedStage={selectedStage}
       onChangeSelectedStage={setSelectedStage}
       onNumberPadAction={onNumberPadAction}
-      stageButtonVariant="clock"
+      stageButtonVariant="time"
       onPressDisplay={onPressDisplay}
       fullScreenAmount={fullScreenAmount}
       disabledButtons={disabledButtons}

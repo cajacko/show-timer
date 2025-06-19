@@ -2,7 +2,7 @@ import React from "react";
 import { Button, ButtonProps, View, ViewProps, ButtonText } from "tamagui";
 
 export type StageValue = number[];
-export type StageButtonVariant = "clock" | "duration";
+export type StageButtonVariant = "time" | "duration";
 
 export interface StageButtonProps
   extends Omit<ButtonProps, "color" | "variant">,
