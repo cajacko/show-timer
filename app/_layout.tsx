@@ -6,6 +6,7 @@ import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { useTheme } from "tamagui";
+import { OrientationProvider } from "@/features/orientation/OrientationContext";
 
 function Content() {
   const theme = useTheme();
@@ -41,7 +42,9 @@ export default function RootLayout() {
   return (
     <Tamagui colorScheme={colorScheme}>
       <ThemeProvider value={DarkTheme}>
-        <Content />
+        <OrientationProvider>
+          <Content />
+        </OrientationProvider>
       </ThemeProvider>
     </Tamagui>
   );

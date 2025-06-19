@@ -15,7 +15,7 @@ import Countdown, { CountdownProps } from "@/features/countdown/Countdown";
 import stageColors from "@/features/stages/stageColors";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { ChevronLeft, LockKeyhole, UnlockKeyhole } from "@tamagui/lucide-icons";
-import { Orientation, useOrientation } from "@/hooks/useOrientation";
+import { useOrientation } from "@/features/orientation/OrientationContext";
 import { Platform } from "react-native";
 import Color from "color";
 import TimerActions, {
@@ -72,7 +72,19 @@ export default React.memo(function Display({
   const { buttonSize, height: actionsHeight } = useTimerActionSize();
   const _actionsVisibility = useSharedValue<number>(0);
   const _lockVisibility = useSharedValue<number>(0);
-  const _orientation = useOrientation();
+  const {
+    lockOrientation: _lockOrientation,
+    lockedOrientation,
+    orientation: _orientation,
+  } = useOrientation();
+
+  const lockOrientation = React.useCallback(() => {
+    if (lockedOrientation) {
+      _lockOrientation(null);
+    } else {
+      _lockOrientation(_orientation);
+    }
+  }, [_lockOrientation, lockedOrientation, _orientation]);
 
   const hideActionsTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
@@ -136,13 +148,6 @@ export default React.memo(function Display({
       });
     }, showActionsDuration);
   }, [_actionsVisibility]);
-
-  const [lockedOrientation, setLockedOrientation] =
-    React.useState<null | Orientation>(null);
-
-  const lockOrientation = React.useCallback(() => {
-    setLockedOrientation((prevValue) => (prevValue ? null : _orientation));
-  }, [_orientation]);
 
   const orientation = useDerivedValue(() => {
     if (fullScreenAmount.value !== 1) {
