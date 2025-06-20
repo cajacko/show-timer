@@ -52,9 +52,9 @@ export const OrientationProvider: React.FC<React.PropsWithChildren> = ({
       } else if (Math.abs(beta) < 45 && gamma < -45) {
         newOrientation = "landscape-right";
       } else if (beta > 45) {
-        newOrientation = "portrait-down";
-      } else if (beta < -45) {
         newOrientation = "portrait-up";
+      } else if (beta < -45) {
+        newOrientation = "portrait-down";
       }
 
       setOrientation((prev) =>
