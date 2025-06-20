@@ -15,7 +15,10 @@ import Countdown, { CountdownProps } from "@/features/countdown/Countdown";
 import stageColors from "@/features/stages/stageColors";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import { ChevronLeft, LockKeyhole, UnlockKeyhole } from "@tamagui/lucide-icons";
-import { useOrientation } from "@/features/orientation/OrientationContext";
+import {
+  Orientation,
+  useOrientation,
+} from "@/features/orientation/OrientationContext";
 import { Platform } from "react-native";
 import Color from "color";
 import TimerActions, {
@@ -33,7 +36,10 @@ const showActionsDuration = 3000;
 
 export interface DisplayProps
   extends Omit<ViewProps, "height" | "width" | "start">,
-    Pick<TimerActionsProps, "start" | "pause" | "reset" | "addMinute">,
+    Pick<
+      TimerActionsProps,
+      "start" | "pause" | "reset" | "addMinute" | "fullScreen"
+    >,
     Pick<CountdownProps, "type"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
@@ -48,51 +54,12 @@ export interface DisplayProps
   running: boolean;
 }
 
-export default React.memo(function Display({
-  height,
-  width,
-  back: backProp,
-  colorVariant,
-  showText,
-  stage,
-  onPress,
-  duration: durationProp,
-  fullScreenAmount,
+function usePauseEffects({
   flash: flashProp = false,
-  start,
-  pause,
-  reset,
-  addMinute,
-  running,
-  type,
-  ...props
-}: DisplayProps): React.ReactNode {
+  stage,
+}: Pick<DisplayProps, "flash" | "stage">) {
   const flash: boolean = flashEnabled && flashProp;
   const flashOpacity = useSharedValue(1);
-  const { buttonSize, height: actionsHeight } = useTimerActionSize();
-  const _actionsVisibility = useSharedValue<number>(0);
-  const _lockVisibility = useSharedValue<number>(0);
-  const {
-    lockOrientation: _lockOrientation,
-    lockedOrientation,
-    orientation: _orientation,
-  } = useOrientation();
-
-  const lockOrientation = React.useCallback(() => {
-    if (lockedOrientation) {
-      _lockOrientation(null);
-    } else {
-      _lockOrientation(_orientation);
-    }
-  }, [_lockOrientation, lockedOrientation, _orientation]);
-
-  const hideActionsTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
-
-  const hideLockTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
 
   React.useEffect(() => {
     if (flash) {
@@ -106,6 +73,69 @@ export default React.memo(function Display({
     }
   }, [flash, flashOpacity]);
 
+  const theme = useTheme();
+  const backgroundColor = theme[stageColors[stage]]?.val;
+
+  const backgroundColorFlash = React.useMemo(
+    () => Color(backgroundColor).alpha(flashAlpha).toString(),
+    [backgroundColor]
+  );
+
+  const textColor = "white";
+
+  const textFlashColor = React.useMemo(
+    () => Color(textColor).alpha(flashAlpha).toString(),
+    [textColor]
+  );
+
+  const textColorAnimation = useDerivedValue(() => {
+    return interpolateColor(
+      flashOpacity.value,
+      [0, 1],
+      [textFlashColor, textColor]
+    );
+  });
+
+  const backgroundColorAnimation = useDerivedValue(() => {
+    return interpolateColor(
+      flashOpacity.value,
+      [0, 1],
+      [backgroundColorFlash, backgroundColor]
+    );
+  });
+
+  return {
+    textColorAnimation,
+    backgroundColorAnimation,
+  };
+}
+
+function useDisplayOrientation({
+  fullScreenAmount,
+  actionsVisibility,
+}: Pick<DisplayProps, "fullScreenAmount"> & {
+  actionsVisibility: SharedValue<number>;
+}) {
+  const {
+    lockOrientation: _lockOrientation,
+    lockedOrientation,
+    orientation: _orientation,
+  } = useOrientation();
+
+  const _lockVisibility = useSharedValue<number>(0);
+
+  const lockOrientation = React.useCallback(() => {
+    if (lockedOrientation) {
+      _lockOrientation(null);
+    } else {
+      _lockOrientation(_orientation);
+    }
+  }, [_lockOrientation, lockedOrientation, _orientation]);
+
+  const hideLockTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
   React.useEffect(() => {
     _lockVisibility.value = withTiming(1, {
       duration: actionsDuration,
@@ -118,19 +148,62 @@ export default React.memo(function Display({
     }, showActionsDuration);
   }, [_orientation, _lockVisibility]);
 
+  const lockVisibility = useDerivedValue(() => {
+    if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
+    if (actionsVisibility.value === 0) return _lockVisibility.value;
+
+    return actionsVisibility.value;
+  });
+
+  const orientation = useDerivedValue<Orientation>(() => {
+    if (fullScreenAmount.value !== 1) {
+      return "portrait-up";
+    }
+
+    return lockedOrientation ?? _orientation;
+  });
+
+  const rotation = useDerivedValue<number>(() => {
+    switch (orientation.value) {
+      case "portrait-down":
+        return 180;
+      case "landscape-left":
+        return -90;
+      case "landscape-right":
+        return 90;
+      case "portrait-up":
+      default:
+        return 0;
+    }
+  });
+
+  return {
+    lockOrientation,
+    lockedOrientation,
+    orientation,
+    rotation,
+    lockVisibility,
+  };
+}
+
+function useActionVisibility({
+  running,
+  fullScreenAmount,
+  onPress,
+  back: backProp,
+}: Pick<DisplayProps, "running" | "fullScreenAmount" | "onPress" | "back">) {
+  const _actionsVisibility = useSharedValue<number>(0);
+
+  const hideActionsTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+
   const actionsVisibility = useDerivedValue(() => {
     if (_actionsVisibility.value === 0 && running) return 0;
     if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
     if (!running) return 1;
 
     return _actionsVisibility.value;
-  });
-
-  const lockVisibility = useDerivedValue(() => {
-    if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
-    if (actionsVisibility.value === 0) return _lockVisibility.value;
-
-    return actionsVisibility.value;
   });
 
   const showActions = React.useCallback(() => {
@@ -148,78 +221,6 @@ export default React.memo(function Display({
       });
     }, showActionsDuration);
   }, [_actionsVisibility]);
-
-  const orientation = useDerivedValue(() => {
-    if (fullScreenAmount.value !== 1) {
-      return "portrait-up";
-    }
-
-    return lockedOrientation ?? _orientation;
-  });
-
-  const rotation = useDerivedValue(() => {
-    switch (orientation.value) {
-      case "portrait-down":
-        return 180;
-      case "landscape-left":
-        return -90;
-      case "landscape-right":
-        return 90;
-      case "portrait-up":
-      default:
-        return 0;
-    }
-  });
-
-  const duration = useDerivedValue<number | null>(
-    () => (durationProp.value === null ? 0 : durationProp.value),
-    [durationProp]
-  );
-
-  const theme = useTheme();
-  const backgroundColor = theme[stageColors[stage]]?.val;
-
-  const backgroundColorFlash = React.useMemo(
-    () => Color(backgroundColor).alpha(flashAlpha).toString(),
-    [backgroundColor]
-  );
-
-  const textColor = "white";
-
-  const textFlashColor = React.useMemo(
-    () => Color(textColor).alpha(flashAlpha).toString(),
-    [textColor]
-  );
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    height: height.value,
-    width: width.value,
-    padding: colorVariant === "border" ? Math.round(width.value * 0.03) : 0,
-    backgroundColor: interpolateColor(
-      flashOpacity.value,
-      [0, 1],
-      [backgroundColorFlash, backgroundColor]
-    ),
-  }));
-
-  const fontSize = useDerivedValue(() => {
-    if (
-      orientation.value === "landscape-left" ||
-      orientation.value === "landscape-right"
-    ) {
-      return Math.round(width.value * 0.5);
-    }
-
-    return Math.round(width.value * 0.2);
-  });
-
-  const textColorAnimation = useDerivedValue(() => {
-    return interpolateColor(
-      flashOpacity.value,
-      [0, 1],
-      [textFlashColor, textColor]
-    );
-  });
 
   const onTap = React.useCallback(() => {
     const { handled } = onPress?.() || {};
@@ -244,6 +245,57 @@ export default React.memo(function Display({
       }),
     [onTap]
   );
+
+  const back = React.useCallback(() => {
+    _actionsVisibility.value = withTiming(0, {
+      duration: actionsDuration,
+    });
+
+    backProp();
+  }, [_actionsVisibility, backProp]);
+
+  return {
+    actionsVisibility,
+    gesture,
+    back,
+  };
+}
+
+function useStyle({
+  height,
+  width,
+  colorVariant,
+  backgroundColorFlash,
+  orientation,
+  actionsVisibility,
+  rotation,
+  lockVisibility,
+}: Pick<DisplayProps, "height" | "width" | "colorVariant"> & {
+  backgroundColorFlash: SharedValue<string>;
+  orientation: SharedValue<Orientation>;
+  actionsVisibility: SharedValue<number>;
+  rotation: SharedValue<number>;
+  lockVisibility: SharedValue<number>;
+}) {
+  const { buttonSize, height: actionsHeight } = useTimerActionSize();
+
+  const containerStyle = useAnimatedStyle(() => ({
+    height: height.value,
+    width: width.value,
+    padding: colorVariant === "border" ? Math.round(width.value * 0.03) : 0,
+    backgroundColor: backgroundColorFlash.value,
+  }));
+
+  const fontSize = useDerivedValue(() => {
+    if (
+      orientation.value === "landscape-left" ||
+      orientation.value === "landscape-right"
+    ) {
+      return Math.round(width.value * 0.5);
+    }
+
+    return Math.round(width.value * 0.2);
+  });
 
   const backStyle = useAnimatedStyle(() => {
     const position: {
@@ -339,14 +391,6 @@ export default React.memo(function Display({
     };
   });
 
-  const back = React.useCallback(() => {
-    _actionsVisibility.value = withTiming(0, {
-      duration: actionsDuration,
-    });
-
-    backProp();
-  }, [_actionsVisibility, backProp]);
-
   const countdownStyle = useAnimatedStyle(() => ({
     transform: [
       {
@@ -355,14 +399,79 @@ export default React.memo(function Display({
     ],
   }));
 
+  return {
+    countdownStyle,
+    lockStyle,
+    backStyle,
+    fontSize,
+    containerStyle,
+    buttonSize,
+    actionsHeight,
+  };
+}
+
+export default React.memo(function Display({
+  height,
+  width,
+  back: backProp,
+  colorVariant,
+  showText,
+  stage,
+  onPress,
+  duration: durationProp,
+  fullScreenAmount,
+  flash: flashProp = false,
+  start,
+  pause,
+  reset,
+  addMinute,
+  running,
+  type,
+  fullScreen,
+  ...props
+}: DisplayProps): React.ReactNode {
+  const { textColorAnimation, backgroundColorAnimation: backgroundColorFlash } =
+    usePauseEffects({ flash: flashProp, stage });
+
+  const { actionsVisibility, gesture, back } = useActionVisibility({
+    back: backProp,
+    fullScreenAmount,
+    running,
+    onPress,
+  });
+
+  const {
+    lockOrientation,
+    lockedOrientation,
+    orientation,
+    rotation,
+    lockVisibility,
+  } = useDisplayOrientation({ fullScreenAmount, actionsVisibility });
+
+  const duration = useDerivedValue<number | null>(
+    () => (durationProp.value === null ? 0 : durationProp.value),
+    [durationProp]
+  );
+
+  const styles = useStyle({
+    actionsVisibility,
+    backgroundColorFlash,
+    height,
+    lockVisibility,
+    orientation,
+    rotation,
+    width,
+    colorVariant,
+  });
+
   return (
-    <AnimatedView {...props} style={animatedStyle}>
+    <AnimatedView {...props} style={styles.containerStyle}>
       <AnimatedButton
         icon={ChevronLeft}
         onPress={back}
-        size={buttonSize}
+        size={styles.buttonSize}
         circular
-        style={backStyle}
+        style={styles.backStyle}
         position="absolute"
         m="$space.4"
         z={3}
@@ -371,9 +480,9 @@ export default React.memo(function Display({
         <AnimatedButton
           icon={lockedOrientation ? LockKeyhole : UnlockKeyhole}
           onPress={lockOrientation}
-          size={buttonSize}
+          size={styles.buttonSize}
           circular
-          style={lockStyle}
+          style={styles.lockStyle}
           position="absolute"
           m="$space.4"
           z={3}
@@ -392,19 +501,20 @@ export default React.memo(function Display({
         pointerEvents="box-none"
       >
         <AnimatedView
-          style={countdownStyle}
+          style={styles.countdownStyle}
           pointerEvents="none"
-          mt={actionsHeight}
+          mt={styles.actionsHeight}
         >
           <Countdown
             duration={duration}
             color={textColorAnimation}
-            fontSize={fontSize}
+            fontSize={styles.fontSize}
             opacity={showText ? 1 : 0.2}
             type={type}
           />
         </AnimatedView>
         <TimerActions
+          fullScreen={fullScreen}
           start={start}
           pause={pause}
           addMinute={addMinute}
