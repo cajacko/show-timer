@@ -129,17 +129,6 @@ export default React.memo(function TimerScreenLayout({
     });
   }, [fullScreenAmount]);
 
-  const startStyle = useAnimatedStyle(() => {
-    return {
-      opacity: 1 - fullScreenAmount.value,
-      transform: [
-        {
-          translateY: `${fullScreenAmount.value * 100}%`,
-        },
-      ],
-    };
-  });
-
   return (
     <View flexDirection="column" overflow="hidden" {...props}>
       <View position="relative">
@@ -159,28 +148,8 @@ export default React.memo(function TimerScreenLayout({
           addMinute={addMinute}
           running={running}
           type={stageButtonVariant}
+          fullScreen={fullScreenButton ? fullScreen : undefined}
         />
-        <AnimatedView
-          position="absolute"
-          r={0}
-          z={2}
-          b={0}
-          l={0}
-          t={0}
-          pointerEvents="box-none"
-          items="center"
-          justify="flex-end"
-          style={startStyle}
-        >
-          <TimerActions
-            start={start}
-            fullScreen={fullScreenButton ? fullScreen : undefined}
-            pause={pause}
-            reset={reset}
-            addMinute={addMinute}
-            mb="$space.6"
-          />
-        </AnimatedView>
       </View>
       <AnimatedView style={contentStyle} justify="space-between">
         <StageSelector

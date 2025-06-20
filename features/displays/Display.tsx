@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
   withRepeat,
   interpolateColor,
+  interpolate,
 } from "react-native-reanimated";
 import { Button, useTheme, View, ViewProps } from "tamagui";
 import Countdown, { CountdownProps } from "@/features/countdown/Countdown";
@@ -30,7 +31,7 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 const AnimatedButton = Animated.createAnimatedComponent(Button);
 
 const flashAlpha = 0.25;
-const flashEnabled: boolean = true;
+const flashEnabled: boolean = false;
 const actionsDuration = 300;
 const showActionsDuration = 3000;
 
@@ -192,35 +193,45 @@ function useActionVisibility({
   onPress,
   back: backProp,
 }: Pick<DisplayProps, "running" | "fullScreenAmount" | "onPress" | "back">) {
-  const _actionsVisibility = useSharedValue<number>(0);
+  const tappedVisibility = useSharedValue<number>(0);
+
+  const backVisibility = useDerivedValue<number>(() => {
+    const fullScreenValue = running ? tappedVisibility.value : 1;
+
+    return interpolate(fullScreenAmount.value, [0, 1], [0, fullScreenValue]);
+  });
 
   const hideActionsTimeout = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
 
-  const actionsVisibility = useDerivedValue(() => {
-    if (_actionsVisibility.value === 0 && running) return 0;
-    if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
-    if (!running) return 1;
+  const actionsVisibility = useDerivedValue<number>(() => {
+    const fullScreenValue = running ? tappedVisibility.value : 1;
 
-    return _actionsVisibility.value;
+    return interpolate(fullScreenAmount.value, [0, 1], [1, fullScreenValue]);
   });
+
+  const fullScreenButtonVisibility = useDerivedValue<number>(() => {
+    return interpolate(fullScreenAmount.value, [0, 1], [1, 0]);
+  });
+
+  const hideActions = React.useCallback(() => {
+    tappedVisibility.value = withTiming(0, {
+      duration: actionsDuration,
+    });
+  }, [tappedVisibility]);
 
   const showActions = React.useCallback(() => {
     if (hideActionsTimeout.current) {
       clearTimeout(hideActionsTimeout.current);
     }
 
-    _actionsVisibility.value = withTiming(1, {
+    tappedVisibility.value = withTiming(1, {
       duration: actionsDuration,
     });
 
-    hideActionsTimeout.current = setTimeout(() => {
-      _actionsVisibility.value = withTiming(0, {
-        duration: actionsDuration,
-      });
-    }, showActionsDuration);
-  }, [_actionsVisibility]);
+    hideActionsTimeout.current = setTimeout(hideActions, showActionsDuration);
+  }, [tappedVisibility, hideActions]);
 
   const onTap = React.useCallback(() => {
     const { handled } = onPress?.() || {};
@@ -229,14 +240,12 @@ function useActionVisibility({
       return;
     }
 
-    if (_actionsVisibility.value === 1) {
-      _actionsVisibility.value = withTiming(0, {
-        duration: actionsDuration,
-      });
+    if (tappedVisibility.value === 1) {
+      hideActions();
     } else {
       showActions();
     }
-  }, [onPress, _actionsVisibility, showActions]);
+  }, [onPress, tappedVisibility, showActions, hideActions]);
 
   const gesture = React.useMemo(
     () =>
@@ -247,17 +256,16 @@ function useActionVisibility({
   );
 
   const back = React.useCallback(() => {
-    _actionsVisibility.value = withTiming(0, {
-      duration: actionsDuration,
-    });
-
+    hideActions();
     backProp();
-  }, [_actionsVisibility, backProp]);
+  }, [hideActions, backProp]);
 
   return {
     actionsVisibility,
     gesture,
     back,
+    backVisibility,
+    fullScreenButtonVisibility,
   };
 }
 
@@ -270,12 +278,14 @@ function useStyle({
   actionsVisibility,
   rotation,
   lockVisibility,
+  backVisibility,
 }: Pick<DisplayProps, "height" | "width" | "colorVariant"> & {
   backgroundColorFlash: SharedValue<string>;
   orientation: SharedValue<Orientation>;
   actionsVisibility: SharedValue<number>;
   rotation: SharedValue<number>;
   lockVisibility: SharedValue<number>;
+  backVisibility: SharedValue<number>;
 }) {
   const { buttonSize, height: actionsHeight } = useTimerActionSize();
 
@@ -332,10 +342,10 @@ function useStyle({
 
     return {
       ...position,
-      opacity: actionsVisibility.value,
+      opacity: backVisibility.value,
       transform: [
         {
-          scale: actionsVisibility.value,
+          scale: backVisibility.value,
         },
         {
           rotate: `${rotation.value}deg`,
@@ -433,7 +443,13 @@ export default React.memo(function Display({
   const { textColorAnimation, backgroundColorAnimation: backgroundColorFlash } =
     usePauseEffects({ flash: flashProp, stage });
 
-  const { actionsVisibility, gesture, back } = useActionVisibility({
+  const {
+    actionsVisibility,
+    gesture,
+    back,
+    backVisibility,
+    fullScreenButtonVisibility,
+  } = useActionVisibility({
     back: backProp,
     fullScreenAmount,
     running,
@@ -454,6 +470,7 @@ export default React.memo(function Display({
   );
 
   const styles = useStyle({
+    backVisibility,
     actionsVisibility,
     backgroundColorFlash,
     height,
@@ -520,6 +537,7 @@ export default React.memo(function Display({
           addMinute={addMinute}
           reset={reset}
           visibility={actionsVisibility}
+          fullScreenVisibility={fullScreenButtonVisibility}
         />
       </View>
       <GestureDetector gesture={gesture}>

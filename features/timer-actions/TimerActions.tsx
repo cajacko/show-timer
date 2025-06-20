@@ -7,14 +7,16 @@ import {
 } from "@tamagui/lucide-icons";
 import React from "react";
 import Animated, {
+  interpolate,
   SharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
 import { View, ViewProps, Button } from "tamagui";
 
 const AnimatedButton = Animated.createAnimatedComponent(Button);
+const AnimatedView = Animated.createAnimatedComponent(View);
 
-const mx = "$space.2";
+const mx = 5;
 
 export interface TimerActionsProps
   extends Omit<ViewProps, "start" | "visibility"> {
@@ -24,15 +26,20 @@ export interface TimerActionsProps
   addMinute?: () => void;
   reset?: () => void;
   visibility?: SharedValue<number>;
+  fullScreenVisibility?: SharedValue<number>;
 }
 
 export function useTimerActionSize(): {
   buttonSize: "$5";
   height: number;
+  width: number;
 } {
+  const size = 52;
+
   return {
     buttonSize: "$5",
-    height: 40, // Assuming $5 corresponds to a height of 40px
+    height: size,
+    width: size,
   };
 }
 
@@ -43,25 +50,49 @@ export default React.memo(function TimerActions({
   addMinute,
   reset,
   visibility,
+  fullScreenVisibility,
   ...props
 }: TimerActionsProps): React.ReactNode {
-  const style = useAnimatedStyle(() => ({
-    opacity: visibility ? visibility.value : 1,
-    transform: [{ scale: visibility ? visibility.value : 1 }],
-  }));
+  const { buttonSize, height, width } = useTimerActionSize();
 
-  const { buttonSize, height } = useTimerActionSize();
+  const style = useAnimatedStyle(() => {
+    const _visibility = visibility ? visibility.value : 1;
+
+    return {
+      opacity: _visibility,
+      transform: [{ scale: _visibility }],
+    };
+  });
+
+  const fullScreenStyle = useAnimatedStyle(() => {
+    const _visibility = fullScreenVisibility
+      ? fullScreenVisibility.value
+      : visibility
+      ? visibility.value
+      : 1;
+
+    const _mx = interpolate(_visibility, [0, 1], [0, mx]);
+
+    return {
+      opacity: _visibility,
+      transform: [{ scale: _visibility }],
+      width: interpolate(_visibility, [0, 1], [0, width]),
+      marginLeft: _mx,
+      marginRight: _mx,
+    };
+  });
 
   return (
     <View flexDirection="row" height={height} {...props}>
       {fullScreen && (
-        <AnimatedButton
-          icon={Maximize2}
-          size={buttonSize}
-          onPress={fullScreen}
-          circular
-          mx={mx}
-        />
+        <AnimatedView style={fullScreenStyle} overflow="hidden">
+          <AnimatedButton
+            icon={Maximize2}
+            size={buttonSize}
+            onPress={fullScreen}
+            circular
+          />
+        </AnimatedView>
       )}
       {start && (
         <AnimatedButton
