@@ -42,20 +42,24 @@ export const OrientationProvider: React.FC<React.PropsWithChildren> = ({
     const subscription = DeviceMotion.addListener(({ rotation }) => {
       if (!rotation) return;
 
-      const { beta, gamma } = rotation;
-      const degBeta = beta * (180 / Math.PI);
-      const degGamma = gamma * (180 / Math.PI);
+      const beta = (rotation.beta * 180) / Math.PI; // x-axis (front/back tilt)
+      const gamma = (rotation.gamma * 180) / Math.PI; // y-axis (sideways tilt)
 
-      // Decide based on dominant axis
-      if (degGamma > 60) {
-        setOrientation("landscape-left");
-      } else if (degGamma < -60) {
-        setOrientation("landscape-right");
-      } else if (degBeta > 60) {
-        setOrientation("portrait-up");
-      } else if (degBeta < -60) {
-        setOrientation("portrait-down");
+      let newOrientation: Orientation = "portrait-up";
+
+      if (Math.abs(beta) < 45 && gamma > 45) {
+        newOrientation = "landscape-left";
+      } else if (Math.abs(beta) < 45 && gamma < -45) {
+        newOrientation = "landscape-right";
+      } else if (beta > 45) {
+        newOrientation = "portrait-down";
+      } else if (beta < -45) {
+        newOrientation = "portrait-up";
       }
+
+      setOrientation((prev) =>
+        prev === newOrientation ? prev : newOrientation
+      );
     });
 
     return () => {
