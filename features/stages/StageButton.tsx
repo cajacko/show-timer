@@ -1,7 +1,10 @@
 import React from "react";
 import { Button, ButtonProps, View, ViewProps, ButtonText } from "tamagui";
+import * as z from "zod/v4";
 
-export type StageValue = number[];
+export const stageValue = z.array(z.number());
+
+export type StageValue = z.infer<typeof stageValue>;
 export type StageButtonVariant = "time" | "duration";
 
 export interface StageButtonProps

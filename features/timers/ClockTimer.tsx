@@ -1,19 +1,14 @@
 import React from "react";
 import TimerScreenLayout, {
   TimerScreenLayoutProps,
-  fullScreenDuration,
 } from "../timer-screen-layout/TimerScreenLayout";
 import { TimerCommonProps } from "./Timer.types";
-import {
-  runOnJS,
-  SharedValue,
-  useDerivedValue,
-  withTiming,
-} from "react-native-reanimated";
+import { runOnJS, SharedValue, useDerivedValue } from "react-native-reanimated";
 import { StageValue } from "@/features/stages/StageButton";
-import getActionValue, { nullValue } from "./getActionValue";
+import getActionValue from "./getActionValue";
 import { NumberButtonKey } from "@/features/number-pad/NumberPad";
 import useAnimationLoop from "@/hooks/useAnimationLoop";
+import { useTimerPersist } from "@/features/timers/TimersPersistContext";
 
 export type ClockTimerProps = TimerCommonProps;
 
@@ -88,12 +83,36 @@ export default React.memo(function ClockTimer({
   fullScreenAmount,
   ...props
 }: ClockTimerProps): React.ReactNode {
+  const { clock: initValues, update } = useTimerPersist();
+
   const [selectedStage, setSelectedStage] =
     React.useState<TimerScreenLayoutProps["selectedStage"]>("warning");
-  const [warningValue, setWarningValue] = React.useState<StageValue>(nullValue);
-  const [alertValue, setAlertValue] = React.useState<StageValue>(nullValue);
+  const [warningValue, setWarningValue] = React.useState<StageValue>(
+    initValues.warning
+  );
+  const [alertValue, setAlertValue] = React.useState<StageValue>(
+    initValues.alert
+  );
   const [stage, setStage] =
     React.useState<TimerScreenLayoutProps["stage"]>("okay");
+
+  const updateInit = React.useRef(true);
+
+  React.useEffect(() => {
+    if (updateInit.current) {
+      updateInit.current = false;
+
+      return;
+    }
+
+    update({
+      type: "clock",
+      payload: {
+        alert: alertValue,
+        warning: warningValue,
+      },
+    });
+  }, [alertValue, warningValue, update]);
 
   const duration = useClockDuration();
 

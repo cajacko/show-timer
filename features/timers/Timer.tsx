@@ -2,25 +2,18 @@ import React from "react";
 import TimerScreenLayout, {
   TimerScreenLayoutProps,
 } from "../timer-screen-layout/TimerScreenLayout";
-import { TimerCommonProps } from "./Timer.types";
+import { TimerCommonProps, TimerState } from "./Timer.types";
 import { runOnJS, useDerivedValue } from "react-native-reanimated";
 import { StageValue } from "@/features/stages/StageButton";
 import getActionValue from "./getActionValue";
 import useAnimationLoop from "@/hooks/useAnimationLoop";
 import stageValueToDuration from "@/utils/stageValueToDuration";
 import { NumberButtonKey } from "@/features/number-pad/NumberPad";
+import { useTimerPersist } from "./TimersPersistContext";
 
 export type TimerProps = TimerCommonProps;
 
-const defaultWarningValue: StageValue = [0, 0, 4];
-const defaultAlertValue: StageValue = [0, 0, 5];
-
-type State =
-  | { type: "running"; startedAt: number }
-  | { type: "paused"; duration: number }
-  | { type: "stopped" };
-
-function useTimerDuration(state: State) {
+function useTimerDuration(state: TimerState) {
   const enabled = state.type !== "stopped";
 
   const loop = useAnimationLoop(enabled);
@@ -44,18 +37,37 @@ function useTimerDuration(state: State) {
 export default React.memo(function Timer({
   ...props
 }: TimerProps): React.ReactNode {
+  const { timer: initValues, update } = useTimerPersist();
+
   const [selectedStage, setSelectedStage] =
     React.useState<TimerScreenLayoutProps["selectedStage"]>("warning");
-  const [warningValue, setWarningValue] =
-    React.useState<StageValue>(defaultWarningValue);
-  const [alertValue, setAlertValue] =
-    React.useState<StageValue>(defaultAlertValue);
-  const [stage, setStage] =
-    React.useState<TimerScreenLayoutProps["stage"]>("okay");
+  const [warningValue, setWarningValue] = React.useState<StageValue>(
+    initValues.warning
+  );
+  const [alertValue, setAlertValue] = React.useState<StageValue>(
+    initValues.alert
+  );
 
-  const [state, setState] = React.useState<State>({
-    type: "stopped",
-  });
+  const [state, setState] = React.useState<TimerState>(initValues.state);
+
+  const updateInit = React.useRef(true);
+
+  React.useEffect(() => {
+    if (updateInit.current) {
+      updateInit.current = false;
+
+      return;
+    }
+
+    update({
+      type: "timer",
+      payload: {
+        alert: alertValue,
+        state,
+        warning: warningValue,
+      },
+    });
+  }, [alertValue, state, warningValue, update]);
 
   const warningDuration = React.useMemo(
     () => stageValueToDuration(warningValue),
@@ -65,6 +77,26 @@ export default React.memo(function Timer({
   const alertDuration = React.useMemo(
     () => stageValueToDuration(alertValue),
     [alertValue]
+  );
+
+  const duration = useTimerDuration(state);
+
+  const isDurationPastAlert = useDerivedValue(() => {
+    if (duration.value === null || alertDuration === null) return false;
+    return duration.value >= alertDuration;
+  });
+
+  const isDurationPastWarning = useDerivedValue(() => {
+    if (duration.value === null || warningDuration === null) return false;
+    return duration.value >= warningDuration;
+  });
+
+  const [stage, setStage] = React.useState<TimerScreenLayoutProps["stage"]>(
+    () => {
+      if (isDurationPastAlert.value) return "alert";
+      if (isDurationPastWarning.value) return "warning";
+      return "okay";
+    }
   );
 
   const setActiveValue =
@@ -95,18 +127,6 @@ export default React.memo(function Timer({
       return { type: "running", startedAt: Date.now() };
     });
   }, []);
-
-  const duration = useTimerDuration(state);
-
-  const isDurationPastAlert = useDerivedValue(() => {
-    if (duration.value === null || alertDuration === null) return false;
-    return duration.value >= alertDuration;
-  });
-
-  const isDurationPastWarning = useDerivedValue(() => {
-    if (duration.value === null || warningDuration === null) return false;
-    return duration.value >= warningDuration;
-  });
 
   useDerivedValue(() => {
     if (isDurationPastAlert.value) {

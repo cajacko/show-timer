@@ -2,7 +2,7 @@ import React from "react";
 import TimerScreenLayout, {
   TimerScreenLayoutProps,
 } from "../timer-screen-layout/TimerScreenLayout";
-import { TimerCommonProps } from "./Timer.types";
+import { TimerCommonProps, DurationState } from "./Timer.types";
 import {
   runOnJS,
   SharedValue,
@@ -14,20 +14,12 @@ import getActionValue from "@/features/timers/getActionValue";
 import { NumberButtonKey } from "@/features/number-pad/NumberPad";
 import useAnimationLoop from "@/hooks/useAnimationLoop";
 import stageValueToDuration from "@/utils/stageValueToDuration";
+import { useTimerPersist } from "@/features/timers/TimersPersistContext";
 
 export type DurationTimerProps = TimerCommonProps;
 
-const defaultOkayValue: StageValue = [0, 0, 5];
-const defaultWarningValue: StageValue = [0, 0, 1];
-const defaultAlertValue: StageValue = [0];
-
-type State =
-  | { type: "running"; finishAt: number }
-  | { type: "paused"; secondsLeft: number }
-  | { type: "stopped" };
-
 function useTimerDuration(
-  state: State,
+  state: DurationState,
   initDuration: SharedValue<number | null>
 ) {
   const enabled = state.type !== "stopped";
@@ -54,17 +46,20 @@ function useTimerDuration(
 export default React.memo(function DurationTimer({
   ...props
 }: DurationTimerProps): React.ReactNode {
+  const { duration: initValues, update } = useTimerPersist();
+
   const [selectedStage, setSelectedStage] =
     React.useState<TimerScreenLayoutProps["selectedStage"]>("okay");
-  const [_okayValue, setOkayValue] =
-    React.useState<StageValue>(defaultOkayValue);
-  const [warningValue, setWarningValue] =
-    React.useState<StageValue>(defaultWarningValue);
-  const [_alertValue, setAlertValue] =
-    React.useState<StageValue>(defaultAlertValue);
-  const [state, setState] = React.useState<State>({
-    type: "stopped",
-  });
+  const [_okayValue, setOkayValue] = React.useState<StageValue>(
+    initValues.okay
+  );
+  const [warningValue, setWarningValue] = React.useState<StageValue>(
+    initValues.warning
+  );
+  const [_alertValue, setAlertValue] = React.useState<StageValue>(
+    initValues.alert
+  );
+  const [state, setState] = React.useState<DurationState>(initValues.state);
   const [stage, setStage] =
     React.useState<TimerScreenLayoutProps["stage"]>("okay");
 
@@ -83,6 +78,26 @@ export default React.memo(function DurationTimer({
     }
     return _okayValue;
   }, [_okayValue]);
+
+  const updateInit = React.useRef(true);
+
+  React.useEffect(() => {
+    if (updateInit.current) {
+      updateInit.current = false;
+
+      return;
+    }
+
+    update({
+      type: "duration",
+      payload: {
+        alert: alertValue,
+        state,
+        warning: warningValue,
+        okay: okayValue,
+      },
+    });
+  }, [alertValue, state, warningValue, update, okayValue]);
 
   const warningDuration = React.useMemo(
     () => stageValueToDuration(warningValue),
