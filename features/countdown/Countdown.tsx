@@ -4,11 +4,11 @@ import {
   useDerivedValue,
   useSharedValue,
 } from "react-native-reanimated";
-import { View } from "tamagui";
+import { View, ViewProps } from "tamagui";
 import AnimatedSymbol from "./AnimatedSymbol";
 import AnimatedNumbers from "./AnimatedNumbers";
 
-export interface CountdownProps {
+export interface CountdownProps extends ViewProps {
   /**
    * Duration in seconds
    */
@@ -25,6 +25,7 @@ export default React.memo(function Countdown({
   fontSize,
   opacity,
   type,
+  ...props
 }: CountdownProps): React.ReactNode {
   const isNegative = useDerivedValue<boolean>(() => {
     if (duration.value === null) return false;
@@ -107,7 +108,7 @@ export default React.memo(function Countdown({
   const hasDays = useDerivedValue<boolean>(() => days.value !== null);
 
   return (
-    <View flexDirection="row" opacity={opacity}>
+    <View flexDirection="row" opacity={opacity} {...props}>
       <AnimatedSymbol
         color={color}
         fontSize={fontSize}

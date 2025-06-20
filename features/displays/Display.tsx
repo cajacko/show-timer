@@ -151,13 +151,16 @@ function useDisplayOrientation({
 
   const lockVisibility = useDerivedValue(() => {
     if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
-    if (actionsVisibility.value === 0) return _lockVisibility.value;
 
-    return actionsVisibility.value;
+    return interpolate(
+      actionsVisibility.value,
+      [0, 1],
+      [_lockVisibility.value, actionsVisibility.value]
+    );
   });
 
   const orientation = useDerivedValue<Orientation>(() => {
-    if (fullScreenAmount.value !== 1) {
+    if (fullScreenAmount.value <= 0.5) {
       return "portrait-up";
     }
 
@@ -206,6 +209,9 @@ function useActionVisibility({
   );
 
   const actionsVisibility = useDerivedValue<number>(() => {
+    // TODO: Remove
+    return 1;
+
     const fullScreenValue = running ? tappedVisibility.value : 1;
 
     return interpolate(fullScreenAmount.value, [0, 1], [1, fullScreenValue]);
@@ -275,14 +281,12 @@ function useStyle({
   colorVariant,
   backgroundColorFlash,
   orientation,
-  actionsVisibility,
   rotation,
   lockVisibility,
   backVisibility,
 }: Pick<DisplayProps, "height" | "width" | "colorVariant"> & {
   backgroundColorFlash: SharedValue<string>;
   orientation: SharedValue<Orientation>;
-  actionsVisibility: SharedValue<number>;
   rotation: SharedValue<number>;
   lockVisibility: SharedValue<number>;
   backVisibility: SharedValue<number>;
@@ -401,21 +405,23 @@ function useStyle({
     };
   });
 
-  const countdownStyle = useAnimatedStyle(() => ({
-    transform: [
-      {
-        rotate: `${rotation.value}deg`,
-      },
-    ],
-  }));
+  const contentStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          rotate: `${rotation.value}deg`,
+        },
+      ],
+    };
+  });
 
   return {
-    countdownStyle,
     lockStyle,
     backStyle,
     fontSize,
     containerStyle,
     buttonSize,
+    contentStyle,
     actionsHeight,
   };
 }
@@ -471,7 +477,6 @@ export default React.memo(function Display({
 
   const styles = useStyle({
     backVisibility,
-    actionsVisibility,
     backgroundColorFlash,
     height,
     lockVisibility,
@@ -511,16 +516,13 @@ export default React.memo(function Display({
         items="center"
         justify="center"
         flex={1}
-        // TODO: Fix this in native
-        style={{
-          backgroundColor: colorVariant === "border" ? "black" : "transparent",
-        }}
+        bg={colorVariant === "border" ? "$black1" : "transparent"}
         pointerEvents="box-none"
       >
         <AnimatedView
-          style={styles.countdownStyle}
-          pointerEvents="none"
-          mt={styles.actionsHeight}
+          style={styles.contentStyle}
+          items="center"
+          justify="center"
         >
           <Countdown
             duration={duration}
@@ -528,17 +530,19 @@ export default React.memo(function Display({
             fontSize={styles.fontSize}
             opacity={showText ? 1 : 0.2}
             type={type}
+            pointerEvents="none"
+            mt={styles.actionsHeight}
+          />
+          <TimerActions
+            fullScreen={fullScreen}
+            start={start}
+            pause={pause}
+            addMinute={addMinute}
+            reset={reset}
+            visibility={actionsVisibility}
+            fullScreenVisibility={fullScreenButtonVisibility}
           />
         </AnimatedView>
-        <TimerActions
-          fullScreen={fullScreen}
-          start={start}
-          pause={pause}
-          addMinute={addMinute}
-          reset={reset}
-          visibility={actionsVisibility}
-          fullScreenVisibility={fullScreenButtonVisibility}
-        />
       </View>
       <GestureDetector gesture={gesture}>
         <View position="absolute" t={0} l={0} r={0} b={0} z={1} />
