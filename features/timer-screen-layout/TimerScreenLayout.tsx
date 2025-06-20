@@ -16,13 +16,12 @@ import DisplaysScrollView, {
   DisplaysScrollViewProps,
 } from "@/features/displays/DisplaysScrollView";
 import stageColors from "@/features/stages/stageColors";
-import TimerActions from "@/features/timer-actions/TimerActions";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 export interface TimerScreenLayoutProps
   extends Pick<StageSelectorProps, "okayValue" | "warningValue" | "alertValue">,
-    Omit<ViewProps, "height" | "width" | "start">,
-    Pick<DisplaysScrollViewProps, "duration" | "stage" | "running"> {
+    Omit<ViewProps, "height" | "width" | "start" | "debug">,
+    Pick<DisplaysScrollViewProps, "duration" | "stage" | "running" | "debug"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
   selectedStage?: Stage;
@@ -75,6 +74,7 @@ export default React.memo(function TimerScreenLayout({
   addMinute,
   paused = false,
   running,
+  debug = false,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
@@ -149,6 +149,7 @@ export default React.memo(function TimerScreenLayout({
           running={running}
           type={stageButtonVariant}
           fullScreen={fullScreenButton ? fullScreen : undefined}
+          debug={debug}
         />
       </View>
       <AnimatedView style={contentStyle} justify="space-between">

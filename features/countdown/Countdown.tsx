@@ -8,23 +8,27 @@ import { View, ViewProps } from "tamagui";
 import AnimatedSymbol from "./AnimatedSymbol";
 import AnimatedNumbers from "./AnimatedNumbers";
 
-export interface CountdownProps extends ViewProps {
+export interface CountdownProps extends Omit<ViewProps, "debug"> {
   /**
    * Duration in seconds
    */
   duration: DerivedValue<number | null>;
   color: DerivedValue<string>;
-  fontSize: DerivedValue<number>;
   opacity?: number;
   type: "time" | "duration";
+  availableWidth: DerivedValue<number>;
+  availableHeight: DerivedValue<number>;
+  debug?: boolean;
 }
 
 export default React.memo(function Countdown({
   color,
   duration,
-  fontSize,
   opacity,
   type,
+  availableWidth,
+  availableHeight,
+  debug = false,
   ...props
 }: CountdownProps): React.ReactNode {
   const isNegative = useDerivedValue<boolean>(() => {
@@ -106,6 +110,26 @@ export default React.memo(function Countdown({
   });
 
   const hasDays = useDerivedValue<boolean>(() => days.value !== null);
+
+  const fontSize = useDerivedValue(() => {
+    const maxHeight = availableHeight.value;
+
+    let maxWidthMultiplier: number;
+
+    if (days.value !== null) {
+      maxWidthMultiplier = 0.15;
+    } else if (hours.value !== null) {
+      maxWidthMultiplier = 0.2;
+    } else if (minutes.value !== null) {
+      maxWidthMultiplier = 0.3;
+    } else {
+      maxWidthMultiplier = 0.5;
+    }
+
+    const maxWidth = Math.round(availableWidth.value * maxWidthMultiplier);
+
+    return Math.min(maxHeight, maxWidth);
+  });
 
   return (
     <View flexDirection="row" opacity={opacity} {...props}>

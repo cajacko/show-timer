@@ -9,10 +9,6 @@ import { Text, View } from "tamagui";
 const AnimatedView = Animated.createAnimatedComponent(View);
 const AnimatedText = Animated.createAnimatedComponent(Text);
 
-// TODO: Have it auto expand to fit the digits, but still require a expectedMaxDigits prop, then we
-// only cause a react render in unexpected edge cases but still satisfy the user. And this would
-// only be with huge numbers so it shouldn't update often as it would be the highest decimal
-
 const zeroToNine = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export default React.memo(function Digit({

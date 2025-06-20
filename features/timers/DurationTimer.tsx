@@ -242,6 +242,7 @@ export default React.memo(function DurationTimer({
       fullScreenButton={state.type === "running"}
       paused={state.type === "paused"}
       running={state.type === "running"}
+      debug
       {...props}
     />
   );

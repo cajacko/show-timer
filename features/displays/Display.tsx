@@ -34,14 +34,16 @@ const flashAlpha = 0.25;
 const flashEnabled: boolean = false;
 const actionsDuration = 300;
 const showActionsDuration = 3000;
+const actionsMargin = 10;
+const countdownSideMargin = 20;
 
 export interface DisplayProps
-  extends Omit<ViewProps, "height" | "width" | "start">,
+  extends Omit<ViewProps, "height" | "width" | "start" | "debug">,
     Pick<
       TimerActionsProps,
       "start" | "pause" | "reset" | "addMinute" | "fullScreen"
     >,
-    Pick<CountdownProps, "type"> {
+    Pick<CountdownProps, "type" | "debug"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
   back: () => void;
@@ -209,9 +211,6 @@ function useActionVisibility({
   );
 
   const actionsVisibility = useDerivedValue<number>(() => {
-    // TODO: Remove
-    return 1;
-
     const fullScreenValue = running ? tappedVisibility.value : 1;
 
     return interpolate(fullScreenAmount.value, [0, 1], [1, fullScreenValue]);
@@ -293,23 +292,18 @@ function useStyle({
 }) {
   const { buttonSize, height: actionsHeight } = useTimerActionSize();
 
+  const borderSize = useDerivedValue(() => {
+    const minSize = Math.min(height.value, width.value);
+
+    return colorVariant === "border" ? Math.round(minSize * 0.03) : 0;
+  });
+
   const containerStyle = useAnimatedStyle(() => ({
     height: height.value,
     width: width.value,
-    padding: colorVariant === "border" ? Math.round(width.value * 0.03) : 0,
+    padding: borderSize.value,
     backgroundColor: backgroundColorFlash.value,
   }));
-
-  const fontSize = useDerivedValue(() => {
-    if (
-      orientation.value === "landscape-left" ||
-      orientation.value === "landscape-right"
-    ) {
-      return Math.round(width.value * 0.5);
-    }
-
-    return Math.round(width.value * 0.2);
-  });
 
   const backStyle = useAnimatedStyle(() => {
     const position: {
@@ -415,14 +409,40 @@ function useStyle({
     };
   });
 
+  const actionHeightAllowance = actionsHeight + actionsMargin * 2;
+
+  const countdownAvailableHeight = useDerivedValue(() => {
+    if (
+      orientation.value === "landscape-left" ||
+      orientation.value === "landscape-right"
+    ) {
+      return width.value - actionHeightAllowance * 2 - borderSize.value * 2;
+    }
+
+    return height.value - actionHeightAllowance * 2 - borderSize.value * 2;
+  });
+
+  const countdownAvailableWidth = useDerivedValue(() => {
+    if (
+      orientation.value === "landscape-left" ||
+      orientation.value === "landscape-right"
+    ) {
+      return height.value - countdownSideMargin * 2 - borderSize.value * 2;
+    }
+
+    return width.value - countdownSideMargin * 2 - borderSize.value * 2;
+  });
+
   return {
     lockStyle,
     backStyle,
-    fontSize,
     containerStyle,
     buttonSize,
     contentStyle,
     actionsHeight,
+    countdownAvailableHeight,
+    countdownAvailableWidth,
+    actionHeightAllowance,
   };
 }
 
@@ -444,6 +464,7 @@ export default React.memo(function Display({
   running,
   type,
   fullScreen,
+  debug = false,
   ...props
 }: DisplayProps): React.ReactNode {
   const { textColorAnimation, backgroundColorAnimation: backgroundColorFlash } =
@@ -495,7 +516,7 @@ export default React.memo(function Display({
         circular
         style={styles.backStyle}
         position="absolute"
-        m="$space.4"
+        m={actionsMargin}
         z={3}
       />
       {Platform.OS !== "web" && (
@@ -506,7 +527,7 @@ export default React.memo(function Display({
           circular
           style={styles.lockStyle}
           position="absolute"
-          m="$space.4"
+          m={actionsMargin}
           z={3}
         />
       )}
@@ -523,15 +544,18 @@ export default React.memo(function Display({
           style={styles.contentStyle}
           items="center"
           justify="center"
+          pointerEvents="box-none"
         >
           <Countdown
             duration={duration}
             color={textColorAnimation}
-            fontSize={styles.fontSize}
             opacity={showText ? 1 : 0.2}
             type={type}
             pointerEvents="none"
-            mt={styles.actionsHeight}
+            mt={styles.actionHeightAllowance}
+            availableHeight={styles.countdownAvailableHeight}
+            availableWidth={styles.countdownAvailableWidth}
+            debug={debug}
           />
           <TimerActions
             fullScreen={fullScreen}
@@ -541,6 +565,7 @@ export default React.memo(function Display({
             reset={reset}
             visibility={actionsVisibility}
             fullScreenVisibility={fullScreenButtonVisibility}
+            my={actionsMargin}
           />
         </AnimatedView>
       </View>

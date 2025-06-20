@@ -8,10 +8,6 @@ import AnimatedNumber from "./AnimatedNumber";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-// TODO: Have it auto expand to fit the digits, but still require a expectedMaxDigits prop, then we
-// only cause a react render in unexpected edge cases but still satisfy the user. And this would
-// only be with huge numbers so it shouldn't update often as it would be the highest decimal
-
 export interface AnimatedNumbersProps {
   value: SharedValue<number | null>;
   fontSize: SharedValue<number>;

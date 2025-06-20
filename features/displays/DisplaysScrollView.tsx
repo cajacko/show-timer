@@ -22,6 +22,7 @@ const displays: Partial<DisplayProps>[] = [
   {
     colorVariant: "border",
     showText: true,
+    debug: true,
   },
   {
     colorVariant: "background",
@@ -36,7 +37,10 @@ const displays: Partial<DisplayProps>[] = [
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 export interface DisplaysScrollViewProps
-  extends Omit<ViewProps, "height" | "width" | "start" | "rotate" | "onPress">,
+  extends Omit<
+      ViewProps,
+      "height" | "width" | "start" | "rotate" | "onPress" | "debug"
+    >,
     Pick<
       DisplayProps,
       | "onPress"
@@ -48,6 +52,7 @@ export interface DisplaysScrollViewProps
       | "running"
       | "type"
       | "fullScreen"
+      | "debug"
     > {
   height: SharedValue<number>;
   width: SharedValue<number>;
@@ -73,6 +78,7 @@ export default React.memo(function DisplaysScrollView({
   running,
   type,
   fullScreen,
+  debug = false,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
   const { buttonSize } = useTimerActionSize();
@@ -157,6 +163,7 @@ export default React.memo(function DisplaysScrollView({
               type={type}
               fullScreen={fullScreen}
               {...componentProps}
+              debug={!!debug && !!componentProps.debug}
             />
           </Page>
         ))}
