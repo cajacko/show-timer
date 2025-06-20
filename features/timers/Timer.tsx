@@ -10,6 +10,7 @@ import useAnimationLoop from "@/hooks/useAnimationLoop";
 import stageValueToDuration from "@/utils/stageValueToDuration";
 import { NumberButtonKey } from "@/features/number-pad/NumberPad";
 import { useTimerPersist } from "./TimersPersistContext";
+import { cap } from "@/features/countdown/Countdown";
 
 export type TimerProps = TimerCommonProps;
 
@@ -163,6 +164,16 @@ export default React.memo(function Timer({
 
     return undefined;
   }, [activeValue]);
+
+  useDerivedValue(() => {
+    if (duration.value === null) return;
+
+    if (duration.value >= cap || duration.value <= -cap) {
+      runOnJS(setState)({
+        type: "stopped",
+      });
+    }
+  });
 
   return (
     <TimerScreenLayout

@@ -21,9 +21,11 @@ export interface CountdownProps extends Omit<ViewProps, "debug"> {
   debug?: boolean;
 }
 
+export const cap = 9 * 60 * 60 * 24 + 23 * 60 * 60 + 59 * 60 + 59; // 863999 seconds
+
 export default React.memo(function Countdown({
   color,
-  duration,
+  duration: durationProp,
   opacity,
   type,
   availableWidth,
@@ -31,6 +33,15 @@ export default React.memo(function Countdown({
   debug = false,
   ...props
 }: CountdownProps): React.ReactNode {
+  // Cap duration in seconds at 9 days, 23 hours, 59 minutes and 59 seconds in both positive and negative
+  const duration = useDerivedValue<number | null>(() => {
+    const raw = durationProp.value;
+
+    if (raw === null) return null;
+
+    return Math.max(-cap, Math.min(cap, raw));
+  });
+
   const isNegative = useDerivedValue<boolean>(() => {
     if (duration.value === null) return false;
 
