@@ -113,7 +113,7 @@ export default React.memo(function StageSelector({
           <View key={key} width="33.33%" px={spacing} position="relative">
             <StageButton
               value={value}
-              borderColor={stageColors[key]}
+              borderColor={stageColors[key].background}
               onPress={actions[key]}
               mx={horizontalSpacing}
               variant={variant}

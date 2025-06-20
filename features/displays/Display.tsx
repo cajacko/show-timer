@@ -60,7 +60,8 @@ export interface DisplayProps
 function usePauseEffects({
   flash: flashProp = false,
   stage,
-}: Pick<DisplayProps, "flash" | "stage">) {
+  colorVariant,
+}: Pick<DisplayProps, "flash" | "stage" | "colorVariant">) {
   const flash: boolean = flashEnabled && flashProp;
   const flashOpacity = useSharedValue(1);
 
@@ -77,14 +78,15 @@ function usePauseEffects({
   }, [flash, flashOpacity]);
 
   const theme = useTheme();
-  const backgroundColor = theme[stageColors[stage]]?.val;
+  const backgroundColor = theme[stageColors[stage].background]?.val;
+  const textColor =
+    theme[colorVariant === "background" ? stageColors[stage].text : "$white1"]
+      ?.val;
 
   const backgroundColorFlash = React.useMemo(
     () => Color(backgroundColor).alpha(flashAlpha).toString(),
     [backgroundColor]
   );
-
-  const textColor = "white";
 
   const textFlashColor = React.useMemo(
     () => Color(textColor).alpha(flashAlpha).toString(),
@@ -468,7 +470,7 @@ export default React.memo(function Display({
   ...props
 }: DisplayProps): React.ReactNode {
   const { textColorAnimation, backgroundColorAnimation: backgroundColorFlash } =
-    usePauseEffects({ flash: flashProp, stage });
+    usePauseEffects({ flash: flashProp, stage, colorVariant });
 
   const {
     actionsVisibility,

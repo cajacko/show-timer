@@ -186,7 +186,7 @@ export default React.memo(function TimerScreenLayout({
         />
         <View items="center" justify="center">
           <NumberPad
-            borderColor={stageColor}
+            borderColor={stageColor?.background}
             onAction={onNumberPadAction}
             disabledButtons={disabledButtons}
           />
