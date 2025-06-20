@@ -4,6 +4,7 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import { Text, View } from "tamagui";
+import { Platform } from "react-native";
 
 const AnimatedText = Animated.createAnimatedComponent(Text);
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -11,8 +12,14 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 type Symbol = "-" | ":";
 
 const symbolSpacing: Record<Symbol, { width: number; marginTop: number }> = {
-  "-": { width: 0.5, marginTop: 0.1 },
-  ":": { width: 0.2, marginTop: 0.2 },
+  "-": Platform.select({
+    web: { width: 0.5, marginTop: 0.1 },
+    default: { width: 0.3, marginTop: 0.25 },
+  }),
+  ":": Platform.select({
+    web: { width: 0.2, marginTop: 0.2 },
+    default: { width: 0.25, marginTop: 0.3 },
+  }),
 };
 
 export interface AnimatedSymbolProps {

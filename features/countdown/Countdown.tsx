@@ -128,7 +128,8 @@ export default React.memo(function Countdown({
 
     const maxWidth = Math.round(availableWidth.value * maxWidthMultiplier);
 
-    return Math.min(maxHeight, maxWidth);
+    // We need a fallback min size
+    return Math.max(Math.min(maxHeight, maxWidth), 10);
   });
 
   return (
