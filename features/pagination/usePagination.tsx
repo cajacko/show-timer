@@ -14,6 +14,7 @@ import { GestureDetector, Gesture } from "react-native-gesture-handler";
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 const underScrollPercentage = 0.2; // Percentage of the page width to allow under-scrolling
+const underScrollAmount = 75; // The amount of pixels to scroll before we trigger the the page change
 const fastEnoughVelocity = 2000; // Arbitrary threshold for "fast enough" scrolling
 
 export type ScrollState = "animating" | "scrolling" | "idle";
@@ -118,7 +119,10 @@ export const ScrollView = React.memo(function ScrollView({
     (velocityX: number, translationX: number) => {
       const movementPercentage = Math.abs(translationX) / pageWidth.value;
 
-      const hasMovedEnough = movementPercentage > underScrollPercentage;
+      const hasMovedEnoughPercentage =
+        movementPercentage > underScrollPercentage;
+      const hasMovedEnoughAmount = Math.abs(translationX) > underScrollAmount;
+      const hasMovedEnough = hasMovedEnoughPercentage || hasMovedEnoughAmount;
       const isFastEnough = Math.abs(velocityX) > fastEnoughVelocity; // Arbitrary threshold for "fast enough"
 
       if (!hasMovedEnough && !isFastEnough) {
