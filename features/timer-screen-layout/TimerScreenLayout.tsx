@@ -28,7 +28,6 @@ export interface TimerScreenLayoutProps
   onChangeSelectedStage?: StageSelectorProps["onChange"];
   onNumberPadAction?: NumberPadProps["onAction"];
   stageButtonVariant: StageSelectorProps["variant"];
-  onPressDisplay?: DisplaysScrollViewProps["onPress"];
   disabledButtons?: NumberPadProps["disabledButtons"];
   /**
    * 0 means the display will show at the collapsed height, 1 will show at the full height
@@ -65,7 +64,6 @@ export default React.memo(function TimerScreenLayout({
   description,
   footerHeight,
   footerPb,
-  onPressDisplay,
   disabledButtons,
   start: startProp,
   fullScreenButton,
@@ -78,7 +76,7 @@ export default React.memo(function TimerScreenLayout({
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
-    return height.value / 3;
+    return Math.round(height.value / 3);
   });
 
   /**
@@ -86,17 +84,22 @@ export default React.memo(function TimerScreenLayout({
    * 1 - will be equal to height
    */
   const displayHeight = useDerivedValue<number>(() => {
-    return clamp(
-      collapsedDisplayHeight.value +
-        (height.value - collapsedDisplayHeight.value) * fullScreenAmount.value,
-      collapsedDisplayHeight.value,
-      height.value
+    return Math.round(
+      clamp(
+        collapsedDisplayHeight.value +
+          (height.value - collapsedDisplayHeight.value) *
+            fullScreenAmount.value,
+        collapsedDisplayHeight.value,
+        height.value
+      )
     );
   });
 
+  const displayWidth = useDerivedValue(() => Math.round(width.value));
+
   const contentStyle = useAnimatedStyle(() => {
     return {
-      height: height.value - collapsedDisplayHeight.value,
+      height: Math.round(height.value - collapsedDisplayHeight.value),
     };
   });
 
@@ -129,12 +132,30 @@ export default React.memo(function TimerScreenLayout({
     });
   }, [fullScreenAmount]);
 
+  const onPressDisplay = React.useCallback<
+    NonNullable<DisplaysScrollViewProps["onPress"]>
+  >(() => {
+    if (fullScreenAmount.value === 0) {
+      fullScreenAmount.value = withTiming(1, {
+        duration: fullScreenDuration,
+      });
+
+      return {
+        handled: true,
+      };
+    }
+
+    return {
+      handled: false,
+    };
+  }, [fullScreenAmount]);
+
   return (
     <View flexDirection="column" overflow="hidden" {...props}>
       <View position="relative">
         <DisplaysScrollView
           height={displayHeight}
-          width={width}
+          width={displayWidth}
           duration={duration}
           stage={stage}
           fullScreenAmount={fullScreenAmount}

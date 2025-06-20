@@ -133,24 +133,6 @@ export default React.memo(function ClockTimer({
     [setActiveValue]
   );
 
-  const onPressDisplay = React.useCallback<
-    NonNullable<TimerScreenLayoutProps["onPressDisplay"]>
-  >(() => {
-    if (fullScreenAmount.value === 0) {
-      fullScreenAmount.value = withTiming(1, {
-        duration: fullScreenDuration,
-      });
-
-      return {
-        handled: true,
-      };
-    }
-
-    return {
-      handled: false,
-    };
-  }, [fullScreenAmount]);
-
   const disabledButtons = React.useMemo((): NumberButtonKey[] | undefined => {
     switch (activeValue.length) {
       case 0:
@@ -175,7 +157,6 @@ export default React.memo(function ClockTimer({
       onChangeSelectedStage={setSelectedStage}
       onNumberPadAction={onNumberPadAction}
       stageButtonVariant="time"
-      onPressDisplay={onPressDisplay}
       fullScreenAmount={fullScreenAmount}
       disabledButtons={disabledButtons}
       fullScreenButton
