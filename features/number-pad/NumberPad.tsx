@@ -3,6 +3,7 @@ import NumberButton, {
   NumberButtonValue,
 } from "@/features/number-pad/NumberButton";
 import React from "react";
+import { SharedValue, useDerivedValue } from "react-native-reanimated";
 import { XStack, YStack, YStackProps } from "tamagui";
 
 export type { NumberButtonValue };
@@ -33,6 +34,7 @@ export interface NumberPadProps
     Pick<NumberButtonProps, "borderColor"> {
   onAction?: (value: NumberButtonValue) => void;
   disabledButtons?: NumberButtonKey[];
+  availableHeight: SharedValue<number>;
 }
 
 const margin = "$space.2";
@@ -42,8 +44,13 @@ export default React.memo(function NumberPad({
   borderColor,
   disabledButtons,
   disabled,
+  availableHeight,
   ...yStackProps
 }: NumberPadProps): React.ReactNode {
+  const size = useDerivedValue(() => {
+    return Math.min(availableHeight.value / 4, 100);
+  });
+
   return (
     <YStack {...yStackProps}>
       {grid.map((row, rowIndex) => (
@@ -60,6 +67,7 @@ export default React.memo(function NumberPad({
                 onAction={onAction}
                 ml={columnIndex === 0 ? undefined : margin}
                 disabled={itemDisabled}
+                size={size}
               />
             );
           })}

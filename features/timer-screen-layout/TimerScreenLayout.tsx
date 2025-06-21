@@ -2,6 +2,7 @@ import NumberPad, { NumberPadProps } from "@/features/number-pad/NumberPad";
 import StageSelector, {
   Stage,
   StageSelectorProps,
+  heightAllowance as stageSelectorHeightAllowance,
 } from "@/features/stages/StageSelector";
 import React from "react";
 import Animated, {
@@ -177,6 +178,18 @@ export default React.memo(function TimerScreenLayout({
     };
   }, [fullScreenAmount]);
 
+  const stageSelectorVerticalMargin = 10;
+
+  const numberPadAvailableHeight = useDerivedValue(() => {
+    return (
+      height.value -
+      footerHeight -
+      stageSelectorHeightAllowance -
+      stageSelectorVerticalMargin * 2 -
+      collapsedDisplayHeight.value
+    );
+  });
+
   return (
     <View flexDirection="column" overflow="hidden" {...props}>
       <View position="relative">
@@ -214,7 +227,7 @@ export default React.memo(function TimerScreenLayout({
           active={selectedStage}
           onChange={onChangeSelectedStage}
           activePosition="bottom"
-          my="$space.4"
+          my={stageSelectorVerticalMargin}
           variant={stageButtonVariant}
         />
         <View items="center" justify="center">
@@ -222,6 +235,7 @@ export default React.memo(function TimerScreenLayout({
             borderColor={stageColor?.background}
             onAction={onNumberPadAction}
             disabledButtons={disabledButtons}
+            availableHeight={numberPadAvailableHeight}
           />
         </View>
         <View

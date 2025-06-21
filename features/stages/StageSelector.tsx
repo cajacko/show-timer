@@ -32,6 +32,8 @@ export interface StageSelectorProps
 
 const spacing = "$space.1";
 
+export const heightAllowance = 54;
+
 export default React.memo(function StageSelector({
   active,
   onChange,
