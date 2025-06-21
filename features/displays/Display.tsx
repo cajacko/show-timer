@@ -15,7 +15,9 @@ import { Button, useTheme, View, ViewProps } from "tamagui";
 import Countdown, { CountdownProps } from "@/features/countdown/Countdown";
 import stageColors from "@/features/stages/stageColors";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
-import { ChevronLeft, LockKeyhole, UnlockKeyhole } from "@tamagui/lucide-icons";
+import { ChevronLeft } from "@tamagui/lucide-icons";
+import LockRotation from "@/components/icons/LockRotation";
+import UnlockRotation from "@/components/icons/UnlockRotation";
 import {
   Orientation,
   useOrientation,
@@ -155,6 +157,7 @@ function useDisplayOrientation({
 
   const lockVisibility = useDerivedValue(() => {
     if (fullScreenAmount.value !== 1) return fullScreenAmount.value;
+    if (lockedOrientation !== null) return 1;
 
     return interpolate(
       actionsVisibility.value,
@@ -524,7 +527,7 @@ export default React.memo(function Display({
       />
       {Platform.OS !== "web" && (
         <AnimatedButton
-          icon={lockedOrientation ? LockKeyhole : UnlockKeyhole}
+          icon={lockedOrientation ? LockRotation : UnlockRotation}
           onPress={lockOrientation}
           size={styles.buttonSize}
           circular
