@@ -16,6 +16,7 @@ import DisplaysScrollView, {
   DisplaysScrollViewProps,
 } from "@/features/displays/DisplaysScrollView";
 import stageColors from "@/features/stages/stageColors";
+import { BackHandler } from "react-native";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 export interface TimerScreenLayoutProps
@@ -131,6 +132,24 @@ export default React.memo(function TimerScreenLayout({
       duration: fullScreenDuration,
     });
   }, [fullScreenAmount]);
+
+  React.useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        if (fullScreenRef.current) {
+          goBack();
+          return true; // Prevent default back action
+        }
+
+        return false; // Allow default back action
+      }
+    );
+
+    return () => {
+      backHandler.remove();
+    };
+  }, [goBack]);
 
   const onPressDisplay = React.useCallback<
     NonNullable<DisplaysScrollViewProps["onPress"]>
