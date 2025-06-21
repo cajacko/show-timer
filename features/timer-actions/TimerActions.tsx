@@ -1,10 +1,4 @@
-import {
-  Maximize2,
-  Pause,
-  Play,
-  Plus,
-  RefreshCcw,
-} from "@tamagui/lucide-icons";
+import { Maximize2, Pause, Play, RefreshCcw } from "@tamagui/lucide-icons";
 import React from "react";
 import Animated, {
   interpolate,
@@ -12,6 +6,7 @@ import Animated, {
   useAnimatedStyle,
 } from "react-native-reanimated";
 import { View, ViewProps, Button } from "tamagui";
+import PlusOne from "@/components/icons/PlusOne";
 
 const AnimatedButton = Animated.createAnimatedComponent(Button);
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -116,7 +111,7 @@ export default React.memo(function TimerActions({
       )}
       {addMinute && (
         <AnimatedButton
-          icon={Plus}
+          icon={PlusOne}
           size={buttonSize}
           onPress={addMinute}
           circular
