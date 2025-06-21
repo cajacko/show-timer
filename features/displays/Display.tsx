@@ -57,6 +57,7 @@ export interface DisplayProps
   fullScreenAmount: SharedValue<number>;
   flash?: boolean;
   running: boolean;
+  fullScreenVerticalPadding: number;
 }
 
 function usePauseEffects({
@@ -288,12 +289,16 @@ function useStyle({
   rotation,
   lockVisibility,
   backVisibility,
+  fullScreenVerticalPadding,
+  fullScreenAmount,
 }: Pick<DisplayProps, "height" | "width" | "colorVariant"> & {
   backgroundColorFlash: SharedValue<string>;
   orientation: SharedValue<Orientation>;
   rotation: SharedValue<number>;
   lockVisibility: SharedValue<number>;
   backVisibility: SharedValue<number>;
+  fullScreenVerticalPadding: number;
+  fullScreenAmount: SharedValue<number>;
 }) {
   const { buttonSize, height: actionsHeight } = useTimerActionSize();
 
@@ -414,17 +419,41 @@ function useStyle({
     };
   });
 
-  const actionHeightAllowance = actionsHeight + actionsMargin * 2;
+  const fullScreenActionHeightAllowance = actionsHeight + actionsMargin * 2;
+  const collapsedActionHeightAllowance =
+    fullScreenActionHeightAllowance + fullScreenVerticalPadding;
 
   const countdownAvailableHeight = useDerivedValue(() => {
     if (
       orientation.value === "landscape-left" ||
       orientation.value === "landscape-right"
     ) {
-      return width.value - actionHeightAllowance * 2 - borderSize.value * 2;
+      return interpolate(
+        fullScreenAmount.value,
+        [0, 1],
+        [
+          width.value -
+            collapsedActionHeightAllowance * 2 -
+            borderSize.value * 2,
+          width.value -
+            fullScreenActionHeightAllowance * 2 -
+            borderSize.value * 2,
+        ]
+      );
     }
 
-    return height.value - actionHeightAllowance * 2 - borderSize.value * 2;
+    return interpolate(
+      fullScreenAmount.value,
+      [0, 1],
+      [
+        height.value -
+          collapsedActionHeightAllowance * 2 -
+          borderSize.value * 2,
+        height.value -
+          fullScreenActionHeightAllowance * 2 -
+          borderSize.value * 2,
+      ]
+    );
   });
 
   const countdownAvailableWidth = useDerivedValue(() => {
@@ -447,7 +476,7 @@ function useStyle({
     actionsHeight,
     countdownAvailableHeight,
     countdownAvailableWidth,
-    actionHeightAllowance,
+    actionHeightAllowance: fullScreenActionHeightAllowance,
   };
 }
 
@@ -471,6 +500,7 @@ export default React.memo(function Display({
   fullScreen,
   debug = false,
   secondsVariant,
+  fullScreenVerticalPadding,
   ...props
 }: DisplayProps): React.ReactNode {
   const { textColorAnimation, backgroundColorAnimation: backgroundColorFlash } =
@@ -511,6 +541,8 @@ export default React.memo(function Display({
     rotation,
     width,
     colorVariant,
+    fullScreenVerticalPadding,
+    fullScreenAmount,
   });
 
   return (

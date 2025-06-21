@@ -14,10 +14,15 @@ import {
   usePaginationControls,
 } from "@/features/pagination/usePagination";
 import Indicators from "@/features/pagination/Indicators";
+import { defaultIndicatorSize } from "@/features/pagination/Indicator";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import { Stage } from "@/features/stages/Stage.types";
 import { useTimerActionSize } from "@/features/timer-actions/TimerActions";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const indicatorSize = defaultIndicatorSize;
+const indicatorBottomMargin = 15;
+const fullScreenVerticalPadding = indicatorSize + indicatorBottomMargin;
 
 const displays: Partial<DisplayProps>[] = [
   {
@@ -167,6 +172,7 @@ export default React.memo(function DisplaysScrollView({
               type={type}
               fullScreen={fullScreen}
               secondsVariant={secondsVariant}
+              fullScreenVerticalPadding={fullScreenVerticalPadding}
               {...componentProps}
               debug={!!debug && !!componentProps.debug}
             />
@@ -207,7 +213,7 @@ export default React.memo(function DisplaysScrollView({
       <AnimatedView
         position="absolute"
         width="100%"
-        b="$space.2"
+        b={indicatorBottomMargin}
         l={0}
         r={0}
         items="center"
@@ -220,6 +226,7 @@ export default React.memo(function DisplaysScrollView({
           pageCount={displays.length}
           scrollX={scrollXOffset}
           pageWidth={width}
+          size={indicatorSize}
         />
       </AnimatedView>
     </View>

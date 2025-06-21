@@ -19,7 +19,7 @@ export interface CustomIndicatorProps {
 
 export type IndicatorProps = CircleProps & CustomIndicatorProps;
 
-const defaultIndicatorSize = 15;
+export const defaultIndicatorSize = 15;
 const defaultOutOfViewIndicatorScale = 0.5; // Scale for indicators that 100%
 
 export default React.memo(function Indicator({
