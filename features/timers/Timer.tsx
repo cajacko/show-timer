@@ -192,6 +192,7 @@ export default React.memo(function Timer({
       disabledButtons={disabledButtons}
       paused={state.type === "paused"}
       running={state.type === "running"}
+      secondsVariant="small"
       {...props}
     />
   );

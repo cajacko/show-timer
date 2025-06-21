@@ -43,7 +43,7 @@ export interface DisplayProps
       TimerActionsProps,
       "start" | "pause" | "reset" | "addMinute" | "fullScreen"
     >,
-    Pick<CountdownProps, "type" | "debug"> {
+    Pick<CountdownProps, "type" | "debug" | "secondsVariant"> {
   height: SharedValue<number>;
   width: SharedValue<number>;
   back: () => void;
@@ -467,6 +467,7 @@ export default React.memo(function Display({
   type,
   fullScreen,
   debug = false,
+  secondsVariant,
   ...props
 }: DisplayProps): React.ReactNode {
   const { textColorAnimation, backgroundColorAnimation: backgroundColorFlash } =
@@ -558,6 +559,7 @@ export default React.memo(function Display({
             availableHeight={styles.countdownAvailableHeight}
             availableWidth={styles.countdownAvailableWidth}
             debug={debug}
+            secondsVariant={secondsVariant}
           />
           <TimerActions
             fullScreen={fullScreen}

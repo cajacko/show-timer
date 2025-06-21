@@ -269,6 +269,7 @@ export default React.memo(function DurationTimer({
       paused={state.type === "paused"}
       running={state.type === "running"}
       debug
+      secondsVariant="small"
       {...props}
     />
   );

@@ -180,6 +180,7 @@ export default React.memo(function ClockTimer({
       disabledButtons={disabledButtons}
       fullScreenButton
       running
+      secondsVariant="small"
       {...props}
     />
   );

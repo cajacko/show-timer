@@ -53,6 +53,7 @@ export interface DisplaysScrollViewProps
       | "type"
       | "fullScreen"
       | "debug"
+      | "secondsVariant"
     > {
   height: SharedValue<number>;
   width: SharedValue<number>;
@@ -79,6 +80,7 @@ export default React.memo(function DisplaysScrollView({
   type,
   fullScreen,
   debug = false,
+  secondsVariant,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
   const { buttonSize } = useTimerActionSize();
@@ -162,6 +164,7 @@ export default React.memo(function DisplaysScrollView({
               running={running}
               type={type}
               fullScreen={fullScreen}
+              secondsVariant={secondsVariant}
               {...componentProps}
               debug={!!debug && !!componentProps.debug}
             />

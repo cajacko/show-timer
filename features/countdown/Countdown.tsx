@@ -1,6 +1,7 @@
 import React from "react";
 import {
   DerivedValue,
+  useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
 } from "react-native-reanimated";
@@ -19,6 +20,7 @@ export interface CountdownProps extends Omit<ViewProps, "debug"> {
   availableWidth: DerivedValue<number>;
   availableHeight: DerivedValue<number>;
   debug?: boolean;
+  secondsVariant?: "default" | "small";
 }
 
 export const cap = 9 * 60 * 60 * 24 + 23 * 60 * 60 + 59 * 60 + 59; // 863999 seconds
@@ -31,6 +33,7 @@ export default React.memo(function Countdown({
   availableWidth,
   availableHeight,
   debug = false,
+  secondsVariant: secondsVariantProp = "default",
   ...props
 }: CountdownProps): React.ReactNode {
   // Cap duration in seconds at 9 days, 23 hours, 59 minutes and 59 seconds in both positive and negative
@@ -143,8 +146,35 @@ export default React.memo(function Countdown({
     return Math.max(Math.round(Math.min(maxHeight, maxWidth)), 10);
   });
 
+  const secondsVariant = useDerivedValue(() => {
+    if (secondsVariantProp === "default") return "default";
+
+    if (minutes.value === null && hours.value === null && days.value === null) {
+      return "default";
+    }
+
+    return "small";
+  });
+
+  const secondsFontSize = useDerivedValue(() => {
+    if (secondsVariant.value === "default") return fontSize.value;
+
+    return Math.max(Math.round(fontSize.value / 2), 10);
+  });
+
+  const secondsStyle = useAnimatedStyle(() => ({
+    marginBottom: secondsVariant.value === "default" ? 0 : fontSize.value / 20,
+    marginLeft: secondsVariant.value === "default" ? 0 : fontSize.value / 10,
+  }));
+
+  const showSecondsColon = useDerivedValue<boolean>(() => {
+    if (secondsVariant.value === "default") return leadingZeroesSeconds.value;
+
+    return false;
+  });
+
   return (
-    <View flexDirection="row" opacity={opacity} {...props}>
+    <View flexDirection="row" opacity={opacity} items="flex-end" {...props}>
       <AnimatedSymbol
         color={color}
         fontSize={fontSize}
@@ -187,15 +217,16 @@ export default React.memo(function Countdown({
       <AnimatedSymbol
         color={color}
         fontSize={fontSize}
-        visible={leadingZeroesSeconds}
+        visible={showSecondsColon}
         symbol=":"
       />
       <AnimatedNumbers
         value={seconds}
         color={color}
-        fontSize={fontSize}
+        fontSize={secondsFontSize}
         maxDigits={2}
         leadingZeroes={leadingZeroesSeconds}
+        style={secondsStyle}
       />
     </View>
   );
