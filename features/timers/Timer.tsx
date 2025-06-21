@@ -184,7 +184,8 @@ export default React.memo(function Timer({
       onChangeSelectedStage={setSelectedStage}
       duration={duration}
       onNumberPadAction={onNumberPadAction}
-      stageButtonVariant="duration"
+      stageButtonVariant="units"
+      type="duration"
       start={state.type !== "running" ? start : undefined}
       reset={state.type !== "stopped" ? reset : undefined}
       pause={state.type === "running" ? pause : undefined}

@@ -5,7 +5,11 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 import { Circle, View, ViewProps } from "tamagui";
-import StageButton, { StageValue, StageButtonVariant } from "./StageButton";
+import StageButton, {
+  StageValue,
+  StageButtonVariant,
+  StageButtonProps,
+} from "./StageButton";
 import { Stage } from "./Stage.types";
 import stageColors from "./stageColors";
 import { ChevronRight } from "@tamagui/lucide-icons";
@@ -14,7 +18,9 @@ export type { Stage, StageButtonVariant, StageValue };
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-export interface StageSelectorProps extends ViewProps {
+export interface StageSelectorProps
+  extends ViewProps,
+    Pick<StageButtonProps, "secondsVariant"> {
   okayValue?: StageValue;
   warningValue?: StageValue;
   alertValue?: StageValue;
@@ -34,6 +40,7 @@ export default React.memo(function StageSelector({
   warningValue,
   alertValue,
   variant,
+  secondsVariant,
   ...props
 }: StageSelectorProps): React.ReactNode {
   const stages = React.useMemo(() => {
@@ -117,6 +124,7 @@ export default React.memo(function StageSelector({
               onPress={actions[key]}
               mx={horizontalSpacing}
               variant={variant}
+              secondsVariant={secondsVariant}
             />
             {i < stages.length - 1 && (
               <View

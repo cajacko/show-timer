@@ -3,7 +3,7 @@ import * as z from "zod/v4";
 
 export type TimerCommonProps = Omit<
   TimerScreenLayoutProps,
-  "duration" | "stage" | "running" | "stageButtonVariant"
+  "duration" | "stage" | "running" | "stageButtonVariant" | "type"
 >;
 
 export const timerState = z.discriminatedUnion("type", [

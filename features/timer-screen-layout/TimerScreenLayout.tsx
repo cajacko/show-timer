@@ -24,7 +24,7 @@ export interface TimerScreenLayoutProps
     Omit<ViewProps, "height" | "width" | "start" | "debug">,
     Pick<
       DisplaysScrollViewProps,
-      "duration" | "stage" | "running" | "debug" | "secondsVariant"
+      "duration" | "stage" | "running" | "debug" | "secondsVariant" | "type"
     > {
   height: SharedValue<number>;
   width: SharedValue<number>;
@@ -78,6 +78,7 @@ export default React.memo(function TimerScreenLayout({
   running,
   debug = false,
   secondsVariant,
+  type,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
@@ -191,7 +192,7 @@ export default React.memo(function TimerScreenLayout({
           reset={reset}
           addMinute={addMinute}
           running={running}
-          type={stageButtonVariant}
+          type={type}
           fullScreen={fullScreenButton ? fullScreen : undefined}
           debug={debug}
           secondsVariant={secondsVariant}
