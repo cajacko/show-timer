@@ -17,6 +17,7 @@ import Indicators from "@/features/pagination/Indicators";
 import { ChevronLeft, ChevronRight } from "@tamagui/lucide-icons";
 import { Stage } from "@/features/stages/Stage.types";
 import { useTimerActionSize } from "@/features/timer-actions/TimerActions";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const displays: Partial<DisplayProps>[] = [
   {
@@ -83,6 +84,7 @@ export default React.memo(function DisplaysScrollView({
   secondsVariant,
   ...props
 }: DisplaysScrollViewProps): React.ReactNode {
+  const insets = useSafeAreaInsets();
   const { buttonSize } = useTimerActionSize();
 
   const enableScrollSharedValue = useDerivedValue<boolean>(
@@ -176,6 +178,7 @@ export default React.memo(function DisplaysScrollView({
         t={0}
         l="$space.2"
         b={0}
+        ml={insets.left}
         items="center"
         justify="center"
         style={leftChevronStyle}
@@ -191,6 +194,7 @@ export default React.memo(function DisplaysScrollView({
       <AnimatedView
         position="absolute"
         r="$space.2"
+        mr={insets.right}
         b={0}
         t={0}
         items="center"

@@ -17,6 +17,7 @@ import DisplaysScrollView, {
 } from "@/features/displays/DisplaysScrollView";
 import stageColors from "@/features/stages/stageColors";
 import { BackHandler } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 export interface TimerScreenLayoutProps
@@ -81,6 +82,8 @@ export default React.memo(function TimerScreenLayout({
   type,
   ...props
 }: TimerScreenLayoutProps): React.ReactNode {
+  const insets = useSafeAreaInsets();
+
   const collapsedDisplayHeight = useDerivedValue<number>(() => {
     return Math.round(height.value / 3);
   });
@@ -198,7 +201,12 @@ export default React.memo(function TimerScreenLayout({
           secondsVariant={secondsVariant}
         />
       </View>
-      <AnimatedView style={contentStyle} justify="space-between">
+      <AnimatedView
+        style={contentStyle}
+        justify="space-between"
+        ml={insets.left}
+        mr={insets.right}
+      >
         <StageSelector
           okayValue={okayValue}
           warningValue={warningValue}
