@@ -5,7 +5,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { useTheme } from "tamagui";
+import { Text, View, useTheme } from "tamagui";
 import { OrientationProvider } from "@/features/orientation/OrientationContext";
 import { TimersPersistProvider } from "@/features/timers/TimersPersistContext";
 import * as SplashScreen from "expo-splash-screen";
@@ -46,29 +46,32 @@ export default function RootLayout() {
     InterBold: require("@tamagui/font-inter/otf/Inter-Bold.otf"),
   });
 
-  const appIsReady = loaded && hasPersistData;
-
-  const onLayoutRootView = React.useCallback(() => {
-    if (appIsReady) {
-      // This tells the splash screen to hide immediately! If we call this after
-      // `setAppIsReady`, then we may see a blank screen while the app is
-      // loading its initial state and rendering its first pixels. So instead,
-      // we hide the splash screen once we know the root view has already
-      // performed layout.
-      SplashScreen.hide();
+  React.useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
     }
-  }, [appIsReady]);
+  }, [loaded]);
 
   const onReady = React.useCallback(() => {
     setHasPersistData(true);
   }, []);
+
+  if (!loaded) {
+    return null;
+  }
 
   return (
     <Tamagui colorScheme={colorScheme}>
       <ThemeProvider value={DarkTheme}>
         <OrientationProvider>
           <TimersPersistProvider onReady={onReady}>
-            {appIsReady && <Content onLayout={onLayoutRootView} />}
+            {hasPersistData ? (
+              <Content />
+            ) : (
+              <View flex={1} items="center" justify="center">
+                <Text color="$color">Loading...</Text>
+              </View>
+            )}
           </TimersPersistProvider>
         </OrientationProvider>
       </ThemeProvider>

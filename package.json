@@ -20,7 +20,6 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
-    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/native": "^7.1.6",
@@ -37,6 +36,7 @@
     "expo-haptics": "~14.1.4",
     "expo-image": "~2.2.0",
     "expo-keep-awake": "~14.1.4",
+    "expo-file-system": "~18.1.10",
     "expo-linking": "~7.1.5",
     "expo-router": "~5.0.7",
     "expo-sensors": "~14.1.4",

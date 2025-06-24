@@ -2,10 +2,10 @@ import * as z from "zod/v4";
 import React from "react";
 import { timerState, durationState } from "./Timer.types";
 import { StageValue, stageValue } from "@/features/stages/StageButton";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
 import { nullValue } from "@/features/timers/getActionValue";
 
-const storageKey = "timersPersist";
+const storageFile = FileSystem.documentDirectory + "timersPersist.json";
 const maxUpdateFrequency = 1000;
 
 const timerDefaultWarningValue: StageValue = [0, 0, 4];
@@ -106,7 +106,7 @@ export function TimersPersistProvider({
   React.useEffect(() => {
     let inflight = false;
 
-    setInterval(() => {
+    const id = setInterval(() => {
       if (inflight) return;
 
       const dataToSet: StoredData | null = pendingData.current;
@@ -116,12 +116,17 @@ export function TimersPersistProvider({
       pendingData.current = null;
       inflight = true;
 
-      AsyncStorage.setItem(storageKey, JSON.stringify(dataToSet)).finally(
-        () => {
-          inflight = false;
-        }
-      );
+      FileSystem.writeAsStringAsync(
+        storageFile,
+        JSON.stringify(dataToSet)
+      ).finally(() => {
+        inflight = false;
+      });
     }, maxUpdateFrequency);
+
+    return () => {
+      clearInterval(id);
+    };
   }, []);
 
   const update = React.useCallback<Update>((action) => {
@@ -145,31 +150,48 @@ export function TimersPersistProvider({
   );
 
   React.useEffect(() => {
-    AsyncStorage.getItem(storageKey)
-      .then((item): StoredData => {
-        if (!item) {
-          return defaultData;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const info = await FileSystem.getInfoAsync(storageFile);
+
+        if (!info.exists) {
+          if (!cancelled) {
+            latestData.current = defaultData;
+            setData(defaultData);
+          }
+          return;
         }
+
+        const item = await FileSystem.readAsStringAsync(storageFile);
+
+        let parsed: StoredData = defaultData;
 
         try {
           const result = storedData.safeParse(JSON.parse(item));
-
           if (result.success) {
-            return result.data;
+            parsed = result.data;
           }
-
-          return defaultData;
         } catch {
-          return defaultData;
+          parsed = defaultData;
         }
-      })
-      .catch(() => {
-        return defaultData;
-      })
-      .then((storedData) => {
-        latestData.current = storedData;
-        setData(storedData);
-      });
+
+        if (!cancelled) {
+          latestData.current = parsed;
+          setData(parsed);
+        }
+      } catch {
+        if (!cancelled) {
+          latestData.current = defaultData;
+          setData(defaultData);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   React.useEffect(() => {
