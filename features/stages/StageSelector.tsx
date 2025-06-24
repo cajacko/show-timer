@@ -10,6 +10,7 @@ import StageButton, {
   StageButtonVariant,
   StageButtonProps,
 } from "./StageButton";
+import { ScrollView } from "react-native";
 import { Stage } from "./Stage.types";
 import stageColors from "./stageColors";
 import { ChevronRight } from "@tamagui/lucide-icons";
@@ -31,6 +32,8 @@ export interface StageSelectorProps
 }
 
 const spacing = "$space.1";
+
+const buttonWidth = 120;
 
 export const heightAllowance = 54;
 
@@ -117,9 +120,13 @@ export default React.memo(function StageSelector({
   return (
     <View width="100%" {...props}>
       {activePosition === "top" && !!active && activeChildren}
-      <View flexDirection="row" justify="center">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+      >
         {stages.map(({ key, value }, i) => (
-          <View key={key} width="33.33%" px={spacing} position="relative">
+          <View key={key} width={buttonWidth} px={spacing} position="relative">
             <StageButton
               value={value}
               borderColor={stageColors[key].background}
@@ -143,7 +150,7 @@ export default React.memo(function StageSelector({
             )}
           </View>
         ))}
-      </View>
+      </ScrollView>
       {activePosition === "bottom" && !!active && activeChildren}
     </View>
   );
